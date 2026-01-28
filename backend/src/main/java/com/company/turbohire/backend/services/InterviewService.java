@@ -1,4 +1,4 @@
-package com.company.turbohire.backend.service;
+package com.company.turbohire.backend.services;
 
 import com.company.turbohire.backend.entity.*;
 import com.company.turbohire.backend.enums.InterviewStatus;

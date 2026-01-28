@@ -1,4 +1,4 @@
-package com.company.turbohire.backend.service;
+package com.company.turbohire.backend.services;
 
 import com.company.turbohire.backend.common.SystemLogger;
 import com.company.turbohire.backend.entity.*;
