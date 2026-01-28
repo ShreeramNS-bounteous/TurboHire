@@ -1,5 +1,6 @@
 package com.company.turbohire.backend.services;
 
+import com.company.turbohire.backend.common.SystemLogger;
 import com.company.turbohire.backend.entity.Interview;
 import com.company.turbohire.backend.entity.InterviewFeedback;
 import com.company.turbohire.backend.entity.JobRound;
@@ -21,6 +22,7 @@ public class InterviewFeedbackService {
     private final InterviewFeedbackRepository feedbackRepository;
     private final InterviewRepository interviewRepository;
     private final UserRepository userRepository;
+    private final SystemLogger systemLogger;
 
     /**
      * WRITE
@@ -32,7 +34,8 @@ public class InterviewFeedbackService {
             Long interviewerUserId,
             Integer rating,
             String recommendation,
-            String comments
+            String comments,
+            Long actorUserId
     ) {
 
         if (feedbackRepository.existsByInterview_IdAndInterviewer_Id(
@@ -55,7 +58,13 @@ public class InterviewFeedbackService {
                 .comments(comments)
                 .build();
 
-        return feedbackRepository.save(feedback);
+        InterviewFeedback saved = feedbackRepository.save(feedback);
+
+        // ✅ AUDIT LOG
+        systemLogger.audit(actorUserId, "SUBMIT_FEEDBACK", "INTERVIEW_FEEDBACK", saved.getId());
+
+        return saved;
+
     }
 
     /**

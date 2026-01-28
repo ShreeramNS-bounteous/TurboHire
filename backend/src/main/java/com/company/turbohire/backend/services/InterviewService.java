@@ -1,5 +1,6 @@
 package com.company.turbohire.backend.services;
 
+import com.company.turbohire.backend.common.SystemLogger;
 import com.company.turbohire.backend.entity.*;
 import com.company.turbohire.backend.enums.InterviewStatus;
 import com.company.turbohire.backend.enums.SlotStatus;
@@ -22,12 +23,13 @@ public class InterviewService {
     private final UserRepository userRepository;
     private final InterviewerSlotRepository interviewerSlotRepository;
     private final InterviewerProfileRepository interviewerProfileRepository;
+    private final SystemLogger systemLogger;
 
     /**
      * Create interview for a candidate and job round
      * One interview per candidate per round
      */
-    public Interview createInterview(Long candidateJobId, Long jobRoundId) {
+    public Interview createInterview(Long candidateJobId, Long jobRoundId,Long actorUserId) {
 
         CandidateJob candidateJob = candidateJobRepository.findById(candidateJobId)
                 .orElseThrow(() -> new RuntimeException("CandidateJob not found"));
@@ -45,12 +47,22 @@ public class InterviewService {
                 .status(InterviewStatus.SCHEDULED) // ✅ improvement
                 .build();
 
-        return interviewRepository.save(interview);
+        Interview saved = interviewRepository.save(interview);
+
+        // ✅ AUDIT LOG
+        systemLogger.audit(actorUserId, "CREATE_INTERVIEW", "INTERVIEW", saved.getId());
+
+        // ✅ HIRING EVENT
+        systemLogger.hiringEvent(
+                candidateJob.getCandidate().getId(),
+                candidateJob.getJob().getId(),
+                candidateJob.getBusinessUnit().getId(),
+                "INTERVIEW_CREATED"
+        );
+
+        return saved;
     }
 
-    /**
-     * Assign interviewer to an interview
-     */
     public void assignInterviewer(Long interviewId, Long interviewerUserId) {
 
         Interview interview = interviewRepository.findById(interviewId)
@@ -78,10 +90,7 @@ public class InterviewService {
         interviewAssignmentRepository.save(assignment);
     }
 
-    /**
-     * Book interview slot
-     */
-    public void bookInterviewSlot(Long interviewId, Long interviewerSlotId, Long bookedByUserId) {
+    public void bookInterviewSlot(Long interviewId, Long interviewerSlotId, Long bookedByUserId, Long actorUserId) {
 
         Interview interview = interviewRepository.findById(interviewId)
                 .orElseThrow(() -> new RuntimeException("Interview not found"));
@@ -119,6 +128,19 @@ public class InterviewService {
 
         // update interview status
         interview.setStatus(InterviewStatus.SCHEDULED);
+
+        CandidateJob cj = interview.getCandidateJob();
+
+        // ✅ AUDIT LOG
+        systemLogger.audit(actorUserId, "BOOK_INTERVIEW_SLOT", "INTERVIEW", interviewId);
+
+        // ✅ HIRING EVENT
+        systemLogger.hiringEvent(
+                cj.getCandidate().getId(),
+                cj.getJob().getId(),
+                cj.getBusinessUnit().getId(),
+                "INTERVIEW_SCHEDULED"
+        );
     }
 
     /**

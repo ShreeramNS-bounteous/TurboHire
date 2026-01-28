@@ -1,5 +1,6 @@
 package com.company.turbohire.backend.services;
 
+import com.company.turbohire.backend.common.SystemLogger;
 import com.company.turbohire.backend.entity.InterviewerProfile;
 import com.company.turbohire.backend.entity.InterviewerSlot;
 import com.company.turbohire.backend.enums.SlotStatus;
@@ -20,6 +21,7 @@ public class InterviewerService {
 
     private final InterviewerProfileRepository profileRepository;
     private final InterviewerSlotRepository slotRepository;
+    private final SystemLogger systemLogger;
 
     // READ
 
@@ -34,7 +36,7 @@ public class InterviewerService {
         InterviewerProfile interviewer = profileRepository.findById(interviewerId)
                 .orElseThrow(() -> new RuntimeException("Interviewer not found"));
 
-        return slotRepository.findByInterviewerAndSlotStatus(
+        return slotRepository.findByInterviewerAndStatus(
                 interviewer,
                 SlotStatus.AVAILABLE
         );
@@ -42,7 +44,7 @@ public class InterviewerService {
 
     // WRITE
 
-    public Long createInterviewerProfile(Long userId, String expertise, String timezone) {
+    public Long createInterviewerProfile(Long userId, String expertise, String timezone, Long actorUserId) {
 
         InterviewerProfile profile = InterviewerProfile.builder()
                 .id(userId)
@@ -52,6 +54,10 @@ public class InterviewerService {
                 .build();
 
         profileRepository.save(profile);
+
+        // ✅ AUDIT LOG
+        systemLogger.audit(actorUserId, "CREATE_INTERVIEWER", "INTERVIEWER_PROFILE", userId);
+
         return userId;
     }
 
@@ -59,7 +65,8 @@ public class InterviewerService {
             Long interviewerId,
             LocalDate date,
             LocalTime start,
-            LocalTime end
+            LocalTime end,
+            Long actorUserId
     ) {
 
         InterviewerProfile interviewer = profileRepository.findById(interviewerId)
@@ -70,22 +77,29 @@ public class InterviewerService {
                 .slotDate(date)
                 .startTime(start)
                 .endTime(end)
-                .slotStatus(SlotStatus.AVAILABLE)
+                .status(SlotStatus.AVAILABLE)
                 .build();
 
         slotRepository.save(slot);
+
+        // ✅ AUDIT LOG
+        systemLogger.audit(actorUserId, "CREATE_SLOT", "INTERVIEWER_SLOT", slot.getId());
+
         return slot.getId();
     }
 
-    public void removeInterviewerSlot(Long slotId) {
+    public void removeInterviewerSlot(Long slotId, Long actorUserId) {
 
         InterviewerSlot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new RuntimeException("Slot not found"));
 
-        if (slot.getSlotStatus() == SlotStatus.BOOKED) {
+        if (slot.getStatus() == SlotStatus.BOOKED) {
             throw new RuntimeException("Cannot remove a booked slot");
         }
 
         slotRepository.delete(slot);
+
+        // ✅ AUDIT LOG
+        systemLogger.audit(actorUserId, "DELETE_SLOT", "INTERVIEWER_SLOT", slotId);
     }
 }
