@@ -1,5 +1,6 @@
 package com.company.turbohire.backend.entity;
 
+import com.company.turbohire.backend.enums.SlotStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,8 +34,9 @@ public class InterviewerSlot {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String slotStatus; // AVAILABLE / BOOKED / BLOCKED
+    private SlotStatus status;// AVAILABLE / BOOKED / BLOCKED
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -42,6 +44,8 @@ public class InterviewerSlot {
     @PrePersist
     private void prePersist() {
         this.createdAt = LocalDateTime.now();
-        this.slotStatus = "AVAILABLE";
+        if (this.status == null) {
+            this.status = SlotStatus.AVAILABLE; // ✅ Assign enum, not string
+        }
     }
 }
