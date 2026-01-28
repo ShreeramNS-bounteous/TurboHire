@@ -26,5 +26,7 @@ public class JobRound {
     @Column(name="round_order",nullable = false)
     private Integer roundOrder;
 
+    @Column(nullable = false)
+    private String status; // ACTIVE / INACTIVE
 
 }
