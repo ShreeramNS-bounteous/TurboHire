@@ -26,4 +26,7 @@ public class InterviewerProfile {
 
     @Column(nullable = false)
     private String status;    // ACTIVE / INACTIVE
+
+
+
 }

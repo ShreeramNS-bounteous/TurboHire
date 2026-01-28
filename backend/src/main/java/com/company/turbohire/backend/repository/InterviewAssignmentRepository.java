@@ -1,6 +1,7 @@
 package com.company.turbohire.backend.repository;
 import java.util.List;
 
+import com.company.turbohire.backend.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,5 +18,9 @@ public interface InterviewAssignmentRepository
     
     // Optional: find by interview if needed
     List<InterviewAssignment> findByInterview(Interview interview);
+    // InterviewAssignmentRepository
+    boolean existsByInterviewAndInterviewer(Interview interview, User interviewer);
+
+
 }
 
