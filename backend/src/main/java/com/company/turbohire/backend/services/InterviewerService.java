@@ -23,29 +23,8 @@ public class InterviewerService {
     private final InterviewerSlotRepository slotRepository;
     private final SystemLogger systemLogger;
 
-    // READ
-
-    @Transactional(readOnly = true)
-    public List<InterviewerProfile> getAllInterviewerProfiles() {
-        return profileRepository.findAll();
-    }
-
-    @Transactional(readOnly = true)
-    public List<InterviewerSlot> getAvailableInterviewerSlots(Long interviewerId) {
-
-        InterviewerProfile interviewer = profileRepository.findById(interviewerId)
-                .orElseThrow(() -> new RuntimeException("Interviewer not found"));
-
-        return slotRepository.findByInterviewerAndStatus(
-                interviewer,
-                SlotStatus.AVAILABLE
-        );
-    }
-
-    // WRITE
-
-    public Long createInterviewerProfile(Long userId, String expertise, String timezone, Long actorUserId) {
-
+    // Create interviewer profile
+    public InterviewerProfile createInterviewerProfile(Long userId, String expertise, String timezone, Long actorUserId) {
         InterviewerProfile profile = InterviewerProfile.builder()
                 .id(userId)
                 .expertise(expertise)
@@ -54,21 +33,25 @@ public class InterviewerService {
                 .build();
 
         profileRepository.save(profile);
-
-        // ✅ AUDIT LOG
         systemLogger.audit(actorUserId, "CREATE_INTERVIEWER", "INTERVIEWER_PROFILE", userId);
-
-        return userId;
+        return profile;
     }
 
-    public Long addInterviewerSlot(
-            Long interviewerId,
-            LocalDate date,
-            LocalTime start,
-            LocalTime end,
-            Long actorUserId
-    ) {
+    // List all interviewers
+    @Transactional(readOnly = true)
+    public List<InterviewerProfile> getAllInterviewerProfiles() {
+        return profileRepository.findAll();
+    }
 
+    // Get interviewer profile by id
+    @Transactional(readOnly = true)
+    public InterviewerProfile getInterviewerProfile(Long interviewerId) {
+        return profileRepository.findById(interviewerId)
+                .orElseThrow(() -> new RuntimeException("Interviewer not found"));
+    }
+
+    // Add interviewer slot
+    public InterviewerSlot addInterviewerSlot(Long interviewerId, LocalDate date, LocalTime start, LocalTime end, Long actorUserId) {
         InterviewerProfile interviewer = profileRepository.findById(interviewerId)
                 .orElseThrow(() -> new RuntimeException("Interviewer not found"));
 
@@ -81,15 +64,12 @@ public class InterviewerService {
                 .build();
 
         slotRepository.save(slot);
-
-        // ✅ AUDIT LOG
         systemLogger.audit(actorUserId, "CREATE_SLOT", "INTERVIEWER_SLOT", slot.getId());
-
-        return slot.getId();
+        return slot;
     }
 
+    // Remove interviewer slot
     public void removeInterviewerSlot(Long slotId, Long actorUserId) {
-
         InterviewerSlot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new RuntimeException("Slot not found"));
 
@@ -98,8 +78,22 @@ public class InterviewerService {
         }
 
         slotRepository.delete(slot);
-
-        // ✅ AUDIT LOG
         systemLogger.audit(actorUserId, "DELETE_SLOT", "INTERVIEWER_SLOT", slotId);
+    }
+
+    // Get all slots for an interviewer
+    @Transactional(readOnly = true)
+    public List<InterviewerSlot> getAllSlots(Long interviewerId) {
+        InterviewerProfile interviewer = profileRepository.findById(interviewerId)
+                .orElseThrow(() -> new RuntimeException("Interviewer not found"));
+        return slotRepository.findByInterviewer(interviewer);
+    }
+
+    // Get available slots for an interviewer
+    @Transactional(readOnly = true)
+    public List<InterviewerSlot> getAvailableSlots(Long interviewerId) {
+        InterviewerProfile interviewer = profileRepository.findById(interviewerId)
+                .orElseThrow(() -> new RuntimeException("Interviewer not found"));
+        return slotRepository.findByInterviewerAndStatus(interviewer, SlotStatus.AVAILABLE);
     }
 }
