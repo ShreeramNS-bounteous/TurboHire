@@ -3,7 +3,6 @@ package com.company.turbohire.backend.services;
 import com.company.turbohire.backend.common.SystemLogger;
 import com.company.turbohire.backend.entity.Interview;
 import com.company.turbohire.backend.entity.InterviewFeedback;
-import com.company.turbohire.backend.entity.JobRound;
 import com.company.turbohire.backend.entity.User;
 import com.company.turbohire.backend.repository.InterviewFeedbackRepository;
 import com.company.turbohire.backend.repository.InterviewRepository;
@@ -25,23 +24,14 @@ public class InterviewFeedbackService {
     private final SystemLogger systemLogger;
 
     /**
-     * WRITE
-     * Interviewer submits feedback for an interview
-     * One feedback per interviewer per interview
+     * Submit feedback for an interview
      */
-    public InterviewFeedback submitFeedback(
-            Long interviewId,
-            Long interviewerUserId,
-            Integer rating,
-            String recommendation,
-            String comments,
-            Long actorUserId
-    ) {
+    public InterviewFeedback submitFeedback(Long interviewId, Long interviewerUserId,
+                                            Integer rating, String recommendation, String comments,
+                                            Long actorUserId) {
 
-        if (feedbackRepository.existsByInterview_IdAndInterviewer_Id(
-                interviewId, interviewerUserId)) {
-            throw new RuntimeException(
-                    "Feedback already submitted for this interview by this interviewer");
+        if (feedbackRepository.existsByInterview_IdAndInterviewer_Id(interviewId, interviewerUserId)) {
+            throw new RuntimeException("Feedback already submitted for this interview by this interviewer");
         }
 
         Interview interview = interviewRepository.findById(interviewId)
@@ -60,40 +50,49 @@ public class InterviewFeedbackService {
 
         InterviewFeedback saved = feedbackRepository.save(feedback);
 
-        // ✅ AUDIT LOG
+        // Audit log
         systemLogger.audit(actorUserId, "SUBMIT_FEEDBACK", "INTERVIEW_FEEDBACK", saved.getId());
 
         return saved;
-
     }
 
     /**
-     * READ
-     * Interviewer view – fetch feedback from previous rounds only
+     * Get feedback from previous rounds for the same candidate
      */
     @Transactional(readOnly = true)
     public List<InterviewFeedback> getPreviousRoundFeedback(Long interviewId) {
-
-        Interview currentInterview = interviewRepository.findById(interviewId)
+        Interview interview = interviewRepository.findById(interviewId)
                 .orElseThrow(() -> new RuntimeException("Interview not found"));
 
-        JobRound currentRound = currentInterview.getRound();
-
-        return feedbackRepository
-                .findByInterview_CandidateJobAndInterview_Round_RoundOrderLessThan(
-                        currentInterview.getCandidateJob(),
-                        currentRound.getRoundOrder()
-                );
+        return feedbackRepository.findByInterview_CandidateJobAndInterview_Round_RoundOrderLessThan(
+                interview.getCandidateJob(),
+                interview.getRound().getRoundOrder()
+        );
     }
 
     /**
-     * READ
-     * HR view – fetch ALL feedback for a candidate across all rounds
+     * Get all feedback for a candidate
      */
     @Transactional(readOnly = true)
-    public List<InterviewFeedback> getAllFeedbackForCandidate(Long candidateId) {
-
-        return feedbackRepository
-                .findByInterview_CandidateJob_Candidate_Id(candidateId);
+    public List<InterviewFeedback> getFeedbackForCandidate(Long candidateId) {
+        return feedbackRepository.findByInterview_CandidateJob_Candidate_Id(candidateId);
     }
+
+    /**
+     * Get all feedback for a specific interview
+     */
+//    @Transactional(readOnly = true)
+//    public List<InterviewFeedback> getFeedbackForInterview(Long interviewId) {
+//        return feedbackRepository.findByInterview_Id(interviewId);
+//    }
+
+    /**
+     * Get pending feedback for a specific interviewer
+     * (interviews where this interviewer is assigned but feedback not yet submitted)
+     */
+//    @Transactional(readOnly = true)
+//    public List<InterviewFeedback> getPendingFeedback(Long interviewerUserId) {
+//        // Implemented using a custom repository method
+//        return feedbackRepository.findPendingFeedbackByInterviewer(interviewerUserId);
+//    }
 }

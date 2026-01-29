@@ -3,11 +3,12 @@ package com.company.turbohire.backend.services;
 import com.company.turbohire.backend.common.SystemLogger;
 import com.company.turbohire.backend.entity.*;
 import com.company.turbohire.backend.enums.InterviewStatus;
-import com.company.turbohire.backend.enums.SlotStatus;
 import com.company.turbohire.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -15,25 +16,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class InterviewService {
 
     private final InterviewRepository interviewRepository;
-    private final InterviewAssignmentRepository interviewAssignmentRepository;
-    private final InterviewSlotBookingRepository interviewSlotBookingRepository;
-
     private final CandidateJobRepository candidateJobRepository;
     private final JobRoundRepository jobRoundRepository;
     private final UserRepository userRepository;
-    private final InterviewerSlotRepository interviewerSlotRepository;
+    private final InterviewAssignmentRepository interviewAssignmentRepository;
     private final InterviewerProfileRepository interviewerProfileRepository;
+    private final InterviewerSlotRepository interviewerSlotRepository;
+    private final InterviewSlotBookingRepository interviewSlotBookingRepository;
     private final SystemLogger systemLogger;
 
-    /**
-     * Create interview for a candidate and job round
-     * One interview per candidate per round
-     */
-    public Interview createInterview(Long candidateJobId, Long jobRoundId,Long actorUserId) {
-
+    // Create interview
+    public Interview createInterview(Long candidateJobId, Long jobRoundId, Long actorUserId) {
         CandidateJob candidateJob = candidateJobRepository.findById(candidateJobId)
                 .orElseThrow(() -> new RuntimeException("CandidateJob not found"));
-
         JobRound jobRound = jobRoundRepository.findById(jobRoundId)
                 .orElseThrow(() -> new RuntimeException("JobRound not found"));
 
@@ -44,33 +39,21 @@ public class InterviewService {
         Interview interview = Interview.builder()
                 .candidateJob(candidateJob)
                 .round(jobRound)
-                .status(InterviewStatus.SCHEDULED) // ✅ improvement
+                .status(InterviewStatus.SCHEDULED)
                 .build();
 
         Interview saved = interviewRepository.save(interview);
-
-        // ✅ AUDIT LOG
         systemLogger.audit(actorUserId, "CREATE_INTERVIEW", "INTERVIEW", saved.getId());
-
-        // ✅ HIRING EVENT
-        systemLogger.hiringEvent(
-                candidateJob.getCandidate().getId(),
-                candidateJob.getJob().getId(),
-                candidateJob.getBusinessUnit().getId(),
-                "INTERVIEW_CREATED"
-        );
 
         return saved;
     }
 
+    // Assign interviewer
     public void assignInterviewer(Long interviewId, Long interviewerUserId) {
-
         Interview interview = interviewRepository.findById(interviewId)
                 .orElseThrow(() -> new RuntimeException("Interview not found"));
-
         User interviewer = userRepository.findById(interviewerUserId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+                .orElseThrow(() -> new RuntimeException("Interviewer not found"));
         InterviewerProfile profile = interviewerProfileRepository.findById(interviewerUserId)
                 .orElseThrow(() -> new RuntimeException("Interviewer profile not found"));
 
@@ -86,29 +69,18 @@ public class InterviewService {
                 .interview(interview)
                 .interviewer(interviewer)
                 .build();
-
         interviewAssignmentRepository.save(assignment);
     }
 
-    public void bookInterviewSlot(Long interviewId, Long interviewerSlotId, Long bookedByUserId, Long actorUserId) {
-
+    // Book slot
+    public void bookInterviewSlot(Long interviewId, Long slotId, Long bookedByUserId) {
         Interview interview = interviewRepository.findById(interviewId)
                 .orElseThrow(() -> new RuntimeException("Interview not found"));
-
-        InterviewerSlot slot = interviewerSlotRepository.findById(interviewerSlotId)
+        InterviewerSlot slot = interviewerSlotRepository.findById(slotId)
                 .orElseThrow(() -> new RuntimeException("Interviewer slot not found"));
 
-        if (slot.getStatus() != SlotStatus.AVAILABLE) {
-            throw new RuntimeException("Interviewer slot is not available");
-        }
-
-        User interviewerUser = slot.getInterviewer().getUser();
-
-        boolean interviewerAssigned =
-                interviewAssignmentRepository.existsByInterviewAndInterviewer(interview, interviewerUser);
-
-        if (!interviewerAssigned) {
-            throw new RuntimeException("Slot interviewer is not assigned to this interview");
+        if (slot.getStatus() != com.company.turbohire.backend.enums.SlotStatus.AVAILABLE) {
+            throw new RuntimeException("Slot not available");
         }
 
         User bookedBy = userRepository.findById(bookedByUserId)
@@ -119,37 +91,37 @@ public class InterviewService {
                 .slot(slot)
                 .bookedBy(bookedBy)
                 .build();
-
         interviewSlotBookingRepository.save(booking);
 
-        // update slot status
-        slot.setStatus(SlotStatus.BOOKED);
+        slot.setStatus(com.company.turbohire.backend.enums.SlotStatus.BOOKED);
         interviewerSlotRepository.save(slot);
-
-        // update interview status
         interview.setStatus(InterviewStatus.SCHEDULED);
-
-        CandidateJob cj = interview.getCandidateJob();
-
-        // ✅ AUDIT LOG
-        systemLogger.audit(actorUserId, "BOOK_INTERVIEW_SLOT", "INTERVIEW", interviewId);
-
-        // ✅ HIRING EVENT
-        systemLogger.hiringEvent(
-                cj.getCandidate().getId(),
-                cj.getJob().getId(),
-                cj.getBusinessUnit().getId(),
-                "INTERVIEW_SCHEDULED"
-        );
     }
 
-    /**
-     * Get interview details (frontend read API)
-     */
+    // Get interview by id
     @Transactional(readOnly = true)
-    public Interview getInterviewDetails(Long interviewId) {
-
-        return interviewRepository.findById(interviewId)
+    public Interview getInterview(Long id) {
+        return interviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Interview not found"));
+    }
+
+    // Get interviews for job
+    @Transactional(readOnly = true)
+    public List<Interview> getInterviewsForJob(Long jobId) {
+        return interviewRepository.findByCandidateJob_Job_Id(jobId);
+    }
+
+    // Get interviews for candidate
+    @Transactional(readOnly = true)
+    public List<Interview> getInterviewsForCandidate(Long candidateId) {
+        return interviewRepository.findByCandidateJob_Candidate_Id(candidateId);
+    }
+
+    // Cancel interview
+    public void cancelInterview(Long interviewId) {
+        Interview interview = interviewRepository.findById(interviewId)
+                .orElseThrow(() -> new RuntimeException("Interview not found"));
+        interview.setStatus(InterviewStatus.CANCELLED);
+        interviewRepository.save(interview);
     }
 }
