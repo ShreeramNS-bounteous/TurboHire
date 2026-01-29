@@ -79,6 +79,14 @@ public class CandidateController {
         );
     }
 
+    @GetMapping("/{candidateId}")
+    public CandidateProfile getCandidateProfile(
+            @PathVariable Long candidateId
+    ) {
+        return candidateService.getCandidateProfile(candidateId);
+    }
+
+
     /**
      * READ
      * Frontend: Resume view / download
