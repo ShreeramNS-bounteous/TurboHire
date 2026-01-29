@@ -11,6 +11,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -47,5 +49,16 @@ public class CandidateService {
 
     public Resume getResume(Long candidateId) {
         return resumeRepository.findByCandidate_Id(candidateId);
+    }
+
+    // READ
+    public List<Candidate> getAllCandidates() {
+        return candidateRepository.findAll();
+    }
+
+    // UPDATE
+    public void updateCandidate(Candidate candidate, Long actorUserId) {
+        candidateRepository.save(candidate);
+        systemLogger.audit(actorUserId, "UPDATE_CANDIDATE", "CANDIDATE", candidate.getId());
     }
 }
