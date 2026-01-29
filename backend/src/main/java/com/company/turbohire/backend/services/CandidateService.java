@@ -56,6 +56,8 @@ public class CandidateService {
         return candidateRepository.findAll();
     }
 
+
+
     // UPDATE
     public void updateCandidate(Candidate candidate, Long actorUserId) {
         candidateRepository.save(candidate);
