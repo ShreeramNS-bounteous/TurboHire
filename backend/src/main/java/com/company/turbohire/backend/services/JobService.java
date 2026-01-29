@@ -87,7 +87,7 @@ public class JobService {
     @Transactional(readOnly = true)
     public List<Job> getJobsByRound(String roundName) {
 
-        List<JobRound> rounds = jobRoundRepository.findByRoundNameAndStatus(roundName, "ACTIVE");
+        List<JobRound> rounds = jobRoundRepository.findByRoundName(roundName);
 
         return rounds.stream()
                 .map(JobRound::getJob)

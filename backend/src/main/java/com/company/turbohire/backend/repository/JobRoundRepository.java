@@ -9,5 +9,5 @@ import com.company.turbohire.backend.entity.JobRound;
 
 @Repository
 public interface JobRoundRepository extends JpaRepository<JobRound, Long> {
-    List<JobRound> findByRoundNameAndStatus(String roundName, String status);
+    List<JobRound> findByRoundName(String roundName);
 }
