@@ -4,7 +4,7 @@ import com.company.turbohire.backend.common.SystemLogger;
 import com.company.turbohire.backend.entity.*;
 import com.company.turbohire.backend.enums.CandidateLockStatus;
 import com.company.turbohire.backend.repository.*;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -102,5 +102,14 @@ public class CandidateJobService {
 
     public List<PipelineStageHistory> getPipelineHistory(Long candidateJobId) {
         return pipelineStageHistoryRepository.findByCandidateJobId(candidateJobId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CandidateJob> getActiveCandidatesByStage(String stage) {
+
+        return candidateJobRepository.findByCurrentStageAndStatus(
+                stage,
+                "IN_PROGRESS"
+        );
     }
 }

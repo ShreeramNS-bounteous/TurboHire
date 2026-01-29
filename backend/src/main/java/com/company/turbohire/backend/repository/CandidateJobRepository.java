@@ -11,4 +11,11 @@ public interface CandidateJobRepository extends JpaRepository<CandidateJob, Long
 
     // READ for frontend
     List<CandidateJob> findByCandidate_Id(Long candidateId);
+
+    List<CandidateJob> findByJob_Id(Long jobId);
+
+    List<CandidateJob> findByCurrentStageAndStatus(
+            String currentStage,
+            String status
+    );
 }
