@@ -5,8 +5,10 @@ import com.company.turbohire.backend.entity.Candidate;
 import com.company.turbohire.backend.entity.CandidateProfile;
 import com.company.turbohire.backend.entity.Resume;
 import com.company.turbohire.backend.services.CandidateService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.List;
 
@@ -17,6 +19,7 @@ public class CandidateController {
 
     private final CandidateService candidateService;
 
+
     /**
      * CREATE candidate
      * Frontend: Candidate creation form
@@ -25,7 +28,7 @@ public class CandidateController {
     public Long createCandidate(
             @RequestBody CreateCandidateRequest req,
             @RequestParam Long actorUserId
-    ) {
+    ) throws JsonProcessingException {
 
         Candidate candidate = Candidate.builder()
                 .fullName(req.getFullName())
@@ -36,10 +39,11 @@ public class CandidateController {
 
         CandidateProfile profile = CandidateProfile.builder()
                 .totalExperience(req.getTotalExperience())
-                .skills(req.getSkills())
-                .education(req.getEducation())
+                .skills(req.getSkills())          // ✅ DIRECT
+                .education(req.getEducation())    // ✅ DIRECT
                 .currentCompany(req.getCurrentCompany())
                 .build();
+
 
         Resume resume = Resume.builder()
                 .fileName(req.getFileName())
@@ -79,11 +83,13 @@ public class CandidateController {
         );
     }
 
-    @GetMapping("/{candidateId}")
-    public CandidateProfile getCandidateProfile(
+    @GetMapping("/{candidateId}/profile")
+    public CandidateProfileResponse getCandidateProfile(
             @PathVariable Long candidateId
     ) {
-        return candidateService.getCandidateProfile(candidateId);
+        return CandidateProfileResponse.from(
+                candidateService.getCandidateProfile(candidateId)
+        );
     }
 
 

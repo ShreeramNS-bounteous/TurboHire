@@ -48,8 +48,10 @@ public class CandidateService {
     }
 
     public Resume getResume(Long candidateId) {
-        return resumeRepository.findByCandidate_Id(candidateId);
+        return resumeRepository.findByCandidate_Id(candidateId)
+                .orElseThrow(() -> new RuntimeException("Resume not found"));
     }
+
 
     // READ
     public List<Candidate> getAllCandidates() {

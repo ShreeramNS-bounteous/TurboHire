@@ -2,6 +2,11 @@ package com.company.turbohire.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "candidate_profile")
@@ -13,7 +18,7 @@ import lombok.*;
 public class CandidateProfile {
 
     @Id
-    private Long id;   // same as candidate.id
+    private Long id;
 
     @OneToOne(optional = false)
     @MapsId
@@ -21,13 +26,15 @@ public class CandidateProfile {
     private Candidate candidate;
 
     @Column(name = "total_experience")
-    private Double totalExperience; // years
+    private Double totalExperience;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private String skills; // parsed skills JSON
+    private List<String> skills;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private String education; // parsed education JSON
+    private Map<String, Object> education;
 
     @Column(name = "current_company")
     private String currentCompany;
