@@ -1,6 +1,8 @@
 package com.company.turbohire.backend.dto.candidate;
 
 import lombok.Data;
+import java.util.List;
+import java.util.Map;
 
 @Data
 public class CreateCandidateRequest {
@@ -13,8 +15,8 @@ public class CreateCandidateRequest {
 
     // Profile
     private Double totalExperience;
-    private String skills;
-    private String education;
+    private List<String> skills;
+    private Map<String, Object> education;
     private String currentCompany;
 
     // Resume

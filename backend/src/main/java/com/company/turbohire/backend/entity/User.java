@@ -21,13 +21,16 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;   // maps to user_id
+    private Long id;
 
     @Column(name = "full_name")
     private String fullName;
 
     @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
+    private String password; // 🔑 REQUIRED for login
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "role_id")
@@ -42,6 +45,8 @@ public class User {
     @PrePersist
     private void prePersist() {
         this.createdAt = LocalDateTime.now();
-        this.status = "ACTIVE";
+        if (this.status == null) {
+            this.status = "ACTIVE";
+        }
     }
 }
