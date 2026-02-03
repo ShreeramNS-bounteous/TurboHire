@@ -11,7 +11,7 @@ import java.util.Date;
 public class JwtTokenProvider {
 
     private static final String JWT_SECRET =
-            "cc0697d9f2f359583fbe2e86e248e51fe491755164f247abe94d4d8797a440b3";
+            "turbohire-secret-turbohire-secret-turbohire-secret";
     // ⬆ must be at least 32 chars for HS256
 
     private static final long JWT_EXPIRY = 24 * 60 * 60 * 1000;
