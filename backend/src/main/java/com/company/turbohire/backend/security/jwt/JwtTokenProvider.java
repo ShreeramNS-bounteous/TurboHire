@@ -14,7 +14,8 @@ public class JwtTokenProvider {
             "cc0697d9f2f359583fbe2e86e248e51fe491755164f247abe94d4d8797a440b3";
     // ⬆ must be at least 32 chars for HS256
 
-    private static final long JWT_EXPIRY = 24 * 60 * 60 * 1000;
+    private static final long JWT_EXPIRY = 86400000;
+//    private static final long JWT_EXPIRY = 24 * 60 * 60 * 1000;
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
