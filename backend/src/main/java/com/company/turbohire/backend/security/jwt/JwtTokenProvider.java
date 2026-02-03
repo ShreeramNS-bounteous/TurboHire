@@ -14,8 +14,7 @@ public class JwtTokenProvider {
             "turbohire-secret-turbohire-secret-turbohire-secret";
     // ⬆ must be at least 32 chars for HS256
 
-    private static final long JWT_EXPIRY = 86400000;
-//    private static final long JWT_EXPIRY = 24 * 60 * 60 * 1000;
+    private static final long JWT_EXPIRY = 24 * 60 * 60 * 1000;
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
