@@ -5,7 +5,9 @@ import com.company.turbohire.backend.entity.Role;
 import com.company.turbohire.backend.entity.User;
 import com.company.turbohire.backend.repository.RoleRepository;
 import com.company.turbohire.backend.repository.UserRepository;
+import com.company.turbohire.backend.security.password.PasswordEncoderConfig;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 @Service
@@ -15,6 +17,7 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // 1️⃣ Create USER (Employee by default)
     public Long createUser(CreateUserRequest req) {
@@ -25,7 +28,7 @@ public class AdminService {
         User user = User.builder()
                 .fullName(req.getFullName())
                 .email(req.getEmail())
-                .password(req.getPassword()) // will hash later
+                .password(passwordEncoder.encode(req.getPassword()))
                 .role(userRole)
                 .status("ACTIVE")
                 .build();

@@ -4,8 +4,10 @@ import com.company.turbohire.backend.dto.job.*;
 import com.company.turbohire.backend.entity.BusinessUnit;
 import com.company.turbohire.backend.entity.Job;
 import com.company.turbohire.backend.repository.BURepository;
+import com.company.turbohire.backend.security.util.SecurityUtils;
 import com.company.turbohire.backend.services.JobService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,13 +22,15 @@ public class JobController {
 
     /**
      * CREATE JOB
-     * Frontend: Job creation page
+     * HR / ADMIN ONLY
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
     public JobResponse createJob(
-            @RequestBody CreateJobRequest req,
-            @RequestParam Long actorUserId
+            @RequestBody CreateJobRequest req
     ) {
+
+        Long actorUserId = SecurityUtils.getCurrentUserId();
 
         BusinessUnit bu = buRepository.findById(req.getBuId())
                 .orElseThrow(() -> new RuntimeException("Business Unit not found"));
@@ -47,12 +51,16 @@ public class JobController {
 
     /**
      * PUBLISH JOB
+     * HR / ADMIN ONLY
      */
     @PutMapping("/{jobId}/publish")
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
     public JobResponse publishJob(
-            @PathVariable Long jobId,
-            @RequestParam Long actorUserId
+            @PathVariable Long jobId
     ) {
+
+        Long actorUserId = SecurityUtils.getCurrentUserId();
+
         return JobResponse.from(
                 jobService.publishJob(jobId, actorUserId)
         );
@@ -60,22 +68,27 @@ public class JobController {
 
     /**
      * CLOSE JOB
+     * HR / ADMIN ONLY
      */
     @PutMapping("/{jobId}/close")
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
     public JobResponse closeJob(
-            @PathVariable Long jobId,
-            @RequestParam Long actorUserId
+            @PathVariable Long jobId
     ) {
+
+        Long actorUserId = SecurityUtils.getCurrentUserId();
+
         return JobResponse.from(
                 jobService.closeJob(jobId, actorUserId)
         );
     }
 
     /**
-     * READ
-     * Frontend: Job list page
+     * READ: LIST JOBS
+     * ADMIN / HR / USER / CANDIDATE
      */
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
     public List<JobResponse> getAllJobs() {
         return jobService.getAllJobs()
                 .stream()
@@ -84,10 +97,11 @@ public class JobController {
     }
 
     /**
-     * READ
-     * Frontend: Job details page
+     * READ: JOB DETAILS
+     * ADMIN / HR / USER / CANDIDATE
      */
     @GetMapping("/{jobId}")
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
     public JobResponse getJobById(
             @PathVariable Long jobId
     ) {
@@ -97,10 +111,11 @@ public class JobController {
     }
 
     /**
-     * READ
-     * Frontend: Filter jobs by status
+     * READ: FILTER BY STATUS
+     * ADMIN / HR / USER / CANDIDATE
      */
     @GetMapping("/status/{status}")
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
     public List<JobResponse> getJobsByStatus(
             @PathVariable String status
     ) {
@@ -111,10 +126,11 @@ public class JobController {
     }
 
     /**
-     * READ
-     * Frontend: Filter jobs by round
+     * READ: FILTER BY ROUND
+     * ADMIN / HR / USER / CANDIDATE
      */
     @GetMapping("/round/{roundName}")
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
     public List<JobResponse> getJobsByRound(
             @PathVariable String roundName
     ) {

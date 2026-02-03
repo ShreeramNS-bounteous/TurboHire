@@ -3,12 +3,14 @@ package com.company.turbohire.backend.services;
 import com.company.turbohire.backend.common.SystemLogger;
 import com.company.turbohire.backend.entity.*;
 import com.company.turbohire.backend.enums.CandidateLockStatus;
+import com.company.turbohire.backend.enums.InterviewStatus;
 import com.company.turbohire.backend.repository.*;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,9 @@ public class CandidateJobService {
     private final CandidateLockRepository candidateLockRepository;
     private final PipelineStageHistoryRepository pipelineStageHistoryRepository;
     private final SystemLogger systemLogger;
+    private final CandidatePortalTokenRepository tokenRepository;
+    private final JobRoundRepository jobRoundRepository;
+    private final InterviewRepository interviewRepository;
 
     // WRITE (candidate is already shortlisted externally)
     public Long addCandidateToPipeline(Long candidateId, Long jobId, Long buId, Long actorUserId) {
@@ -43,6 +48,24 @@ public class CandidateJobService {
 
         candidateJobRepository.save(cj);
 
+        JobRound firstRound = jobRoundRepository
+                .findByJob_Id(jobId)
+                .stream()
+                .filter(r -> r.getRoundOrder() == 1)
+                .findFirst()
+                .orElseThrow(() ->
+                        new RuntimeException("No first round defined for job")
+                );
+
+        Interview interview = Interview.builder()
+                .candidateJob(cj)
+                .round(firstRound)
+                .status(InterviewStatus.SCHEDULED)
+                .build();
+
+        interviewRepository.save(interview);
+
+
         CandidateLock lock = CandidateLock.builder()
                 .candidate(candidate)
                 .lockedJob(job)
@@ -58,6 +81,24 @@ public class CandidateJobService {
 
         systemLogger.audit(actorUserId, "PIPELINE_ENTRY", "CANDIDATE_JOB", cj.getId());
         systemLogger.hiringEvent(candidateId, jobId, buId, "PIPELINE_ENTRY");
+
+        String token = UUID.randomUUID().toString();
+
+        CandidatePortalToken portalToken = CandidatePortalToken.builder()
+                .token(token)
+                .candidateJob(cj)
+                .build();
+
+        tokenRepository.save(portalToken);
+
+        // ============================
+        // 📩 LOG PORTAL URL (LOCAL)
+        // ============================
+        String portalUrl =
+                "http://localhost:8080/api/candidate-portal?token=" + token;
+
+        System.out.println("📩 Candidate Portal URL: " + portalUrl);
+
 
         return cj.getId();
     }

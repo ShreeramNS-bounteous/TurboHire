@@ -5,8 +5,10 @@ import com.company.turbohire.backend.dto.candidateJob.MoveStageRequest;
 import com.company.turbohire.backend.dto.candidateJob.PipelineResponse;
 import com.company.turbohire.backend.entity.CandidateJob;
 import com.company.turbohire.backend.repository.CandidateJobRepository;
+import com.company.turbohire.backend.security.util.SecurityUtils;
 import com.company.turbohire.backend.services.CandidateJobService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,14 +24,16 @@ public class CandidateJobController {
 
     // ==============================
     // 1️⃣ ADD CANDIDATE TO PIPELINE
+    // HR / ADMIN ONLY
     // POST /api/pipeline
     // ==============================
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
     public PipelineResponse addCandidateToPipeline(
             @RequestBody AddCandidateToPipelineRequest request
     ) {
 
-        Long actorUserId = 1L; // TODO: Replace with JWT user later
+        Long actorUserId = SecurityUtils.getCurrentUserId();
 
         Long candidateJobId = candidateJobService.addCandidateToPipeline(
                 request.getCandidateId(),
@@ -46,17 +50,23 @@ public class CandidateJobController {
 
     // ==============================
     // 2️⃣ MOVE STAGE
+    // HR / ADMIN ONLY
     // PUT /api/pipeline/{id}/stage
     // ==============================
     @PutMapping("/{id}/stage")
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
     public PipelineResponse moveStage(
             @PathVariable Long id,
             @RequestBody MoveStageRequest request
     ) {
 
-        Long actorUserId = 1L;
+        Long actorUserId = SecurityUtils.getCurrentUserId();
 
-        candidateJobService.moveStage(id, request.getNextStage(), actorUserId);
+        candidateJobService.moveStage(
+                id,
+                request.getNextStage(),
+                actorUserId
+        );
 
         CandidateJob updated = candidateJobRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("CandidateJob not found"));
@@ -66,12 +76,14 @@ public class CandidateJobController {
 
     // ==============================
     // 3️⃣ REJECT CANDIDATE
+    // HR / ADMIN ONLY
     // PUT /api/pipeline/{id}/reject
     // ==============================
     @PutMapping("/{id}/reject")
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
     public PipelineResponse rejectCandidate(@PathVariable Long id) {
 
-        Long actorUserId = 1L;
+        Long actorUserId = SecurityUtils.getCurrentUserId();
 
         candidateJobService.reject(id, actorUserId);
 
@@ -83,9 +95,11 @@ public class CandidateJobController {
 
     // ==============================
     // 4️⃣ GET PIPELINE DETAILS
+    // HR / ADMIN ONLY
     // GET /api/pipeline/{id}
     // ==============================
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
     public PipelineResponse getPipeline(@PathVariable Long id) {
 
         CandidateJob cj = candidateJobRepository.findById(id)
@@ -96,10 +110,14 @@ public class CandidateJobController {
 
     // ==============================
     // 5️⃣ GET PIPELINE BY CANDIDATE
+    // HR / ADMIN ONLY
     // GET /api/pipeline/candidate/{candidateId}
     // ==============================
     @GetMapping("/candidate/{candidateId}")
-    public List<PipelineResponse> getPipelineByCandidate(@PathVariable Long candidateId) {
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
+    public List<PipelineResponse> getPipelineByCandidate(
+            @PathVariable Long candidateId
+    ) {
 
         return candidateJobRepository.findByCandidate_Id(candidateId)
                 .stream()
@@ -109,10 +127,14 @@ public class CandidateJobController {
 
     // ==============================
     // 6️⃣ GET PIPELINE BY JOB
+    // HR / ADMIN ONLY
     // GET /api/pipeline/job/{jobId}
     // ==============================
     @GetMapping("/job/{jobId}")
-    public List<PipelineResponse> getPipelineByJob(@PathVariable Long jobId) {
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
+    public List<PipelineResponse> getPipelineByJob(
+            @PathVariable Long jobId
+    ) {
 
         return candidateJobRepository.findByJob_Id(jobId)
                 .stream()
@@ -121,7 +143,7 @@ public class CandidateJobController {
     }
 
     // ==============================
-    // 🔥 ENTITY → DTO MAPPING
+    // 🔥 ENTITY → DTO
     // ==============================
     private PipelineResponse mapToResponse(CandidateJob cj) {
 
