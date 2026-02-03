@@ -2,10 +2,12 @@ package com.company.turbohire.backend.controller;
 
 import com.company.turbohire.backend.dto.interview.*;
 import com.company.turbohire.backend.entity.Interview;
+import com.company.turbohire.backend.security.util.SecurityUtils;
 import com.company.turbohire.backend.services.InterviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,17 +20,20 @@ public class InterviewController {
 
     private final InterviewService interviewService;
 
+    @PreAuthorize("hasRole('RECRUITER')")
     @PostMapping
     public ResponseEntity<InterviewResponseDto> createInterview(
-            @RequestBody CreateInterviewRequestDto request,
-            @RequestParam Long actorUserId
+            @RequestBody CreateInterviewRequestDto request
+
     ) {
+        Long actorUserId = SecurityUtils.getCurrentUserId();
         Interview interview = interviewService.createInterview(request.getCandidateJobId(),
                 request.getJobRoundId(), actorUserId);
         InterviewResponseDto dto = mapToDto(interview);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
+    @PreAuthorize("hasRole('RECRUITER')")
     @PostMapping("/{id}/assign-interviewer")
     public ResponseEntity<Void> assignInterviewer(
             @PathVariable Long id,
@@ -38,6 +43,7 @@ public class InterviewController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAnyRole('RECRUITER','USER')")
     @PostMapping("/{id}/book-slot")
     public ResponseEntity<Void> bookSlot(
             @PathVariable Long id,
@@ -47,12 +53,14 @@ public class InterviewController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAnyRole('RECRUITER','USER')")
     @GetMapping("/{id}")
     public ResponseEntity<InterviewResponseDto> getInterview(@PathVariable Long id) {
         Interview interview = interviewService.getInterview(id);
         return ResponseEntity.ok(mapToDto(interview));
     }
 
+    @PreAuthorize("hasRole('RECRUITER')")
     @GetMapping("/job/{jobId}")
     public ResponseEntity<List<InterviewSummaryDto>> getInterviewsForJob(@PathVariable Long jobId) {
         List<InterviewSummaryDto> list = interviewService.getInterviewsForJob(jobId).stream()
@@ -60,6 +68,7 @@ public class InterviewController {
         return ResponseEntity.ok(list);
     }
 
+    @PreAuthorize("hasRole('RECRUITER')")
     @GetMapping("/candidate/{candidateId}")
     public ResponseEntity<List<InterviewSummaryDto>> getInterviewsForCandidate(@PathVariable Long candidateId) {
         List<InterviewSummaryDto> list = interviewService.getInterviewsForCandidate(candidateId).stream()
@@ -67,6 +76,7 @@ public class InterviewController {
         return ResponseEntity.ok(list);
     }
 
+    @PreAuthorize("hasRole('RECRUITER')")
     @PutMapping("/{id}/cancel")
     public ResponseEntity<Void> cancelInterview(@PathVariable Long id) {
         interviewService.cancelInterview(id);

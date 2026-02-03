@@ -3,6 +3,7 @@ package com.company.turbohire.backend.controller;
 import com.company.turbohire.backend.dto.offer.*;
 import com.company.turbohire.backend.services.OfferService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,7 +18,8 @@ public class OfferController {
     /**
      * RELEASE OFFER
      * Frontend: Offer release page
-     */
+     */@PreAuthorize("hasRole('RECRUITER')")
+
     @PostMapping("/{candidateJobId}/release")
     public void releaseOffer(
             @PathVariable Long candidateJobId,
@@ -31,6 +33,7 @@ public class OfferController {
      * ACCEPT OFFER
      * Frontend: Offer acceptance page
      */
+    @PreAuthorize("hasRole('CANDIDATE')")
     @PostMapping("/{candidateJobId}/accept")
     public void acceptOffer(
             @PathVariable Long candidateJobId,
@@ -47,6 +50,7 @@ public class OfferController {
      * Rejection is represented as DECLINED status.
      * We reuse accept-style logic but update status.
      */
+    @PreAuthorize("hasRole('CANDIDATE')")
     @PostMapping("/{candidateJobId}/reject")
     public void rejectOffer(
             @PathVariable Long candidateJobId,

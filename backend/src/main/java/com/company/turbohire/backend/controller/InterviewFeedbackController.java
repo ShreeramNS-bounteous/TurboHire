@@ -8,6 +8,7 @@ import com.company.turbohire.backend.services.InterviewFeedbackService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class InterviewFeedbackController {
     /**
      * Submit feedback for an interview
      */
+    @PreAuthorize("hasRole('USER')")
     @PostMapping
     public ResponseEntity<InterviewFeedbackResponseDto> submitFeedback(
             @RequestBody SubmitInterviewFeedbackRequestDto request,
@@ -42,6 +44,7 @@ public class InterviewFeedbackController {
     /**
      * Get previous round feedback for an interview
      */
+    @PreAuthorize("hasAnyRole('RECRUITER','USER')")
     @GetMapping("/interview/{id}/previous")
     public ResponseEntity<List<InterviewFeedbackResponseDto>> getPreviousRoundFeedback(
             @PathVariable("id") Long interviewId
@@ -56,6 +59,7 @@ public class InterviewFeedbackController {
     /**
      * Get all feedback for a candidate
      */
+    @PreAuthorize("hasAnyRole('RECRUITER')")
     @GetMapping("/candidate/{candidateId}")
     public ResponseEntity<List<InterviewFeedbackResponseDto>> getAllFeedbackForCandidate(
             @PathVariable Long candidateId

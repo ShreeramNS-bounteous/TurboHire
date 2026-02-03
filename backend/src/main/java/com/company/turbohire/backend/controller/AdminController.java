@@ -1,12 +1,11 @@
 package com.company.turbohire.backend.controller;
 
-
 import com.company.turbohire.backend.dto.admin.AssignRoleRequest;
 import com.company.turbohire.backend.dto.admin.CreateUserRequest;
 import com.company.turbohire.backend.services.AdminService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/api/admin")
@@ -15,9 +14,7 @@ public class AdminController {
 
     private final AdminService adminService;
 
-    /**
-     * Create User (Employee)
-     */
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/users")
     public Long createUser(
             @RequestBody CreateUserRequest request
@@ -25,9 +22,8 @@ public class AdminController {
         return adminService.createUser(request);
     }
 
-    /**
-     * Assign Role to User (Make HR)
-     */
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/users/{userId}/assign-role")
     public void assignRole(
             @PathVariable Long userId,
