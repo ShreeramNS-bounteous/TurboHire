@@ -26,10 +26,6 @@ private Long id;
 @Column(name = "bu_name",nullable = false,unique = true)
 private String name;
 
-@ManyToOne
-@JoinColumn(name = "bu_head_user_id")
-private User buHead;
-
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

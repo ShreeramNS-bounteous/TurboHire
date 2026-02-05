@@ -7,9 +7,11 @@ import com.company.turbohire.backend.entity.Resume;
 import com.company.turbohire.backend.repository.CandidateProfileRepository;
 import com.company.turbohire.backend.repository.CandidateRepository;
 import com.company.turbohire.backend.repository.ResumeRepository;
-import jakarta.transaction.Transactional;
+import  com.company.turbohire.backend.dto.candidate.CandidateProfileResponse;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -43,9 +45,25 @@ public class CandidateService {
         return candidateRepository.findById(candidateId).orElseThrow();
     }
 
-    public CandidateProfile getCandidateProfile(Long candidateId) {
-        return candidateProfileRepository.findById(candidateId).orElseThrow();
+    @Transactional(readOnly = true)
+    public CandidateProfileResponse getCandidateProfile(Long candidateId) {
+
+        Candidate candidate = candidateRepository
+                .findById(candidateId)
+                .orElseThrow(() -> new RuntimeException("Candidate not found"));
+
+        CandidateProfile profile = candidateProfileRepository
+                .findById(candidateId)
+                .orElse(null);
+
+        Resume resume = resumeRepository
+                .findByCandidate_Id(candidateId)
+                .orElse(null);
+
+        return CandidateProfileResponse.from(candidate, profile, resume);
     }
+
+
 
     public Resume getResume(Long candidateId) {
         return resumeRepository.findByCandidate_Id(candidateId)

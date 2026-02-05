@@ -94,9 +94,7 @@ public class CandidateController {
     public CandidateProfileResponse getCandidateProfile(
             @PathVariable Long candidateId
     ) {
-        return CandidateProfileResponse.from(
-                candidateService.getCandidateProfile(candidateId)
-        );
+        return candidateService.getCandidateProfile(candidateId);
     }
 
     /**
