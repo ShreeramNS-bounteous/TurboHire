@@ -3,6 +3,7 @@ package com.company.turbohire.backend.services;
 import com.company.turbohire.backend.common.SystemLogger;
 import com.company.turbohire.backend.entity.*;
 import com.company.turbohire.backend.enums.InterviewStatus;
+import com.company.turbohire.backend.notification.service.NotificationService;
 import com.company.turbohire.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,9 @@ public class InterviewService {
     private final InterviewerSlotRepository interviewerSlotRepository;
     private final InterviewSlotBookingRepository interviewSlotBookingRepository;
     private final SystemLogger systemLogger;
+    private final NotificationService notificationService;
+    private final CandidatePortalTokenRepository tokenRepository;
+
 
     // Create interview
     public Interview createInterview(Long candidateJobId, Long jobRoundId, Long actorUserId) {
@@ -70,6 +74,38 @@ public class InterviewService {
                 .interviewer(interviewer)
                 .build();
         interviewAssignmentRepository.save(assignment);
+
+        String token =
+                tokenRepository.findByCandidateJob(interview.getCandidateJob())
+                        .orElseThrow(() -> new RuntimeException("Portal token not found"))
+                        .getToken();
+
+        String portalLink =
+                "http://localhost:8080/api/candidate-portal?token=" + token;
+
+
+        // 🔥 MAIL TO INTERVIEWER – DETAILS ONLY
+        notificationService.notifyInterviewer(
+                interviewer,
+                interview.getCandidateJob(),
+                interview
+        );
+
+        // 🔥 MAIL TO CANDIDATE (UNCHANGED)
+        notificationService.notifyCandidateStatus(
+                interview.getCandidateJob().getCandidate(),
+                portalLink,
+                interview.getCandidateJob().getCurrentStage()
+        );
+
+
+        // 🔥 MAIL TO CANDIDATE
+        notificationService.notifyCandidateStatus(
+                interview.getCandidateJob().getCandidate(),
+                portalLink,
+                interview.getCandidateJob().getCurrentStage()
+        );
+
     }
 
     // Book slot

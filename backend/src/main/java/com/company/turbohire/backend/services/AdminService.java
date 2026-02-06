@@ -3,6 +3,7 @@ package com.company.turbohire.backend.services;
 import com.company.turbohire.backend.dto.admin.CreateUserRequest;
 import com.company.turbohire.backend.entity.Role;
 import com.company.turbohire.backend.entity.User;
+import com.company.turbohire.backend.notification.service.NotificationService;
 import com.company.turbohire.backend.repository.RoleRepository;
 import com.company.turbohire.backend.repository.UserRepository;
 import com.company.turbohire.backend.security.password.PasswordEncoderConfig;
@@ -18,6 +19,8 @@ public class AdminService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
+
 
     // 1️⃣ Create USER (Employee by default)
     public Long createUser(CreateUserRequest req) {
@@ -34,6 +37,12 @@ public class AdminService {
                 .build();
 
         userRepository.save(user);
+        // 🔥 MAIL TO HR
+        notificationService.sendHrCredentials(
+                user,
+                req.getPassword()
+        );
+
         return user.getId();
     }
 

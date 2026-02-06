@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +52,19 @@ public class InterviewFeedbackService {
         InterviewFeedback saved = feedbackRepository.save(feedback);
 
         // Audit log
-        systemLogger.audit(actorUserId, "SUBMIT_FEEDBACK", "INTERVIEW_FEEDBACK", saved.getId());
+//        systemLogger.audit(actorUserId, "SUBMIT_FEEDBACK", "INTERVIEW_FEEDBACK", saved.getId());
+
+        systemLogger.audit(
+                actorUserId,
+                "FEEDBACK_SUBMITTED",
+                "InterviewFeedback",
+                feedback.getId(),
+                Map.of(
+                        "rating", feedback.getRating(),
+                        "recommendation", feedback.getRecommendation(),
+                        "interviewId", interviewId
+                )
+        );
 
         return saved;
     }

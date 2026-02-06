@@ -21,4 +21,18 @@ public interface InterviewerSlotRepository extends JpaRepository<InterviewerSlot
     default List<InterviewerSlot> findByInterviewer(InterviewerProfile interviewer) {
         return findByInterviewer_Id(interviewer.getId());
     }
+
+    List<InterviewerSlot> findByVisibleToHrIdAndStatus(
+            Long hrId,
+            SlotStatus status
+    );
+
+    List<InterviewerSlot> findByInterviewerProfile(
+            InterviewerProfile profile
+    );
+
+    List<InterviewerSlot> findByInterviewerProfileAndStatus(
+            InterviewerProfile profile,
+            SlotStatus status
+    );
 }
