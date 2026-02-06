@@ -17,6 +17,7 @@ public class AuthUser implements UserDetails {
     private String email;
     private String password;
     private String role;
+    private Long buId;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -20,16 +20,18 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
     }
 
-    public String generateToken(Long userId, String email, String role) {
+    public String generateToken(Long userId, String email, String role, Long buId) {
         return Jwts.builder()
                 .setSubject(email)
                 .claim("userId", userId)
                 .claim("role", role)
+                .claim("buId", buId)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRY))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
+
 
     public boolean validateToken(String token) {
         try {
@@ -54,6 +56,11 @@ public class JwtTokenProvider {
     public String getRole(String token) {
         return getClaims(token).get("role", String.class);
     }
+
+    public Long getBuId(String token) {
+        return ((Number) getClaims(token).get("buId")).longValue();
+    }
+
 
     private Claims getClaims(String token) {
         return Jwts.parserBuilder()
