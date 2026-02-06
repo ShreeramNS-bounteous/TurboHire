@@ -23,8 +23,13 @@ public class InterviewerService {
     private final InterviewerSlotRepository slotRepository;
     private final SystemLogger systemLogger;
 
-    // Create interviewer profile
-    public InterviewerProfile createInterviewerProfile(Long userId, String expertise, String timezone, Long actorUserId) {
+    // ================= CREATE PROFILE =================
+    public InterviewerProfile createInterviewerProfile(
+            Long userId,
+            String expertise,
+            String timezone,
+            Long actorUserId) {
+
         InterviewerProfile profile = InterviewerProfile.builder()
                 .id(userId)
                 .expertise(expertise)
@@ -33,67 +38,94 @@ public class InterviewerService {
                 .build();
 
         profileRepository.save(profile);
-        systemLogger.audit(actorUserId, "CREATE_INTERVIEWER", "INTERVIEWER_PROFILE", userId);
+
+        systemLogger.audit(
+                actorUserId,
+                "CREATE_INTERVIEWER",
+                "INTERVIEWER_PROFILE",
+                userId
+        );
+
         return profile;
     }
 
-    // List all interviewers
+    // ================= ADD SLOT =================
+    public InterviewerSlot addInterviewerSlot(
+            Long interviewerId,
+            LocalDate slotDate,
+            LocalTime start,
+            LocalTime end,
+            Long actorUserId,
+            Long hrId
+    ) {
+
+        InterviewerProfile profile =
+                profileRepository.findById(interviewerId)
+                        .orElseThrow(() ->
+                                new RuntimeException("Interviewer not found"));
+
+        InterviewerSlot slot = InterviewerSlot.builder()
+                .interviewer(profile)
+                .slotDate(slotDate)
+                .startTime(start)
+                .endTime(end)
+                .status(SlotStatus.AVAILABLE)
+
+                // these must exist in entity
+                .postedByInterviewerId(actorUserId)
+                .visibleToHrId(hrId)
+                .build();
+
+        slotRepository.save(slot);
+
+        systemLogger.audit(
+                actorUserId,
+                "SLOT_POSTED",
+                "INTERVIEWER_SLOT",
+                slot.getId()
+        );
+
+        return slot;
+    }
+
+    // ================= READ =================
+
     @Transactional(readOnly = true)
     public List<InterviewerProfile> getAllInterviewerProfiles() {
         return profileRepository.findAll();
     }
 
-    // Get interviewer profile by id
     @Transactional(readOnly = true)
     public InterviewerProfile getInterviewerProfile(Long interviewerId) {
         return profileRepository.findById(interviewerId)
-                .orElseThrow(() -> new RuntimeException("Interviewer not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("Interviewer not found"));
     }
 
-    // Add interviewer slot
-    public InterviewerSlot addInterviewerSlot(Long interviewerId, LocalDate date, LocalTime start, LocalTime end, Long actorUserId) {
-        InterviewerProfile interviewer = profileRepository.findById(interviewerId)
-                .orElseThrow(() -> new RuntimeException("Interviewer not found"));
-
-        InterviewerSlot slot = InterviewerSlot.builder()
-                .interviewer(interviewer)
-                .slotDate(date)
-                .startTime(start)
-                .endTime(end)
-                .status(SlotStatus.AVAILABLE)
-                .build();
-
-        slotRepository.save(slot);
-        systemLogger.audit(actorUserId, "CREATE_SLOT", "INTERVIEWER_SLOT", slot.getId());
-        return slot;
-    }
-
-    // Remove interviewer slot
-    public void removeInterviewerSlot(Long slotId, Long actorUserId) {
-        InterviewerSlot slot = slotRepository.findById(slotId)
-                .orElseThrow(() -> new RuntimeException("Slot not found"));
-
-        if (slot.getStatus() == SlotStatus.BOOKED) {
-            throw new RuntimeException("Cannot remove a booked slot");
-        }
-
-        slotRepository.delete(slot);
-        systemLogger.audit(actorUserId, "DELETE_SLOT", "INTERVIEWER_SLOT", slotId);
-    }
-
-    // Get all slots for an interviewer
     @Transactional(readOnly = true)
     public List<InterviewerSlot> getAllSlots(Long interviewerId) {
-        InterviewerProfile interviewer = profileRepository.findById(interviewerId)
-                .orElseThrow(() -> new RuntimeException("Interviewer not found"));
-        return slotRepository.findByInterviewer(interviewer);
+
+        InterviewerProfile interviewer =
+                profileRepository.findById(interviewerId)
+                        .orElseThrow(() ->
+                                new RuntimeException("Interviewer not found"));
+
+        // 🔥 FIXED METHOD NAME
+        return slotRepository.findByInterviewerProfile(interviewer);
     }
 
-    // Get available slots for an interviewer
     @Transactional(readOnly = true)
     public List<InterviewerSlot> getAvailableSlots(Long interviewerId) {
-        InterviewerProfile interviewer = profileRepository.findById(interviewerId)
-                .orElseThrow(() -> new RuntimeException("Interviewer not found"));
-        return slotRepository.findByInterviewerAndStatus(interviewer, SlotStatus.AVAILABLE);
+
+        InterviewerProfile interviewer =
+                profileRepository.findById(interviewerId)
+                        .orElseThrow(() ->
+                                new RuntimeException("Interviewer not found"));
+
+        // 🔥 FIXED METHOD NAME
+        return slotRepository.findByInterviewerProfileAndStatus(
+                interviewer,
+                SlotStatus.AVAILABLE
+        );
     }
 }

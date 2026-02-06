@@ -1,13 +1,16 @@
 package com.company.turbohire.backend.services;
 
 import com.company.turbohire.backend.dto.analytics.*;
+import com.company.turbohire.backend.entity.Job;
 import com.company.turbohire.backend.repository.AnalyticsAuditRepository;
 import com.company.turbohire.backend.repository.AnalyticsHiringRepository;
 import com.company.turbohire.backend.entity.AuditLog;
 import com.company.turbohire.backend.entity.HiringEvent;
+import com.company.turbohire.backend.repository.JobRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,136 +20,140 @@ public class AnalyticsService {
 
     private final AnalyticsAuditRepository auditRepo;
     private final AnalyticsHiringRepository hiringRepo;
+    private final JobRepository jobRepository;
 
-    // ================= COMMON DASHBOARD =================
-
+    // ============= ADMIN DASHBOARD =============
     public CommonDashboardDto getCommonDashboard() {
 
-        long total = hiringRepo.countByEventType("CANDIDATE_ADDED");
-        long rejected = hiringRepo.countByEventType("CANDIDATE_REJECTED");
-        long offers = hiringRepo.countByEventType("OFFER_ACCEPTED");
+        List<Long> jobIds =
+                jobRepository.findAll()
+                        .stream().map(Job::getId).toList();
 
-        // ---- Funnel from Audit Logs ----
-        Map<String, Long> funnelMap =
-                auditRepo.findStageChanges()
-                        .stream()
-                        .collect(Collectors.groupingBy(
-                                a -> extract(a.getMetaData(), "newStage"),
-                                Collectors.counting()
-                        ));
+        return buildDashboardForJobs(jobIds, null, null, null, null);
+    }
 
-        List<StageFunnelDto> funnel =
-                funnelMap.entrySet().stream()
-                        .map(e -> StageFunnelDto.builder()
-                                .stage(e.getKey())
-                                .count(e.getValue())
-                                .build())
-                        .toList();
+    // ============= HR DASHBOARD =============
+    public CommonDashboardDto getDashboardForHr(Long hrId) {
 
-        // ---- Job Stats ----
-        Map<Long, List<HiringEvent>> byJob =
-                hiringRepo.findAll()
-                        .stream()
-                        .collect(Collectors.groupingBy(
-                                HiringEvent::getJobId
-                        ));
+        List<Long> jobIds =
+                jobRepository.findByCreatedBy(hrId)
+                        .stream().map(Job::getId).toList();
 
-        List<JobStatDto> jobStats = new ArrayList<>();
+        return buildDashboardForJobs(jobIds, null, null, null, null);
+    }
 
-        for (var e : byJob.entrySet()) {
+    // ============= FILTERED =============
+    public CommonDashboardDto getFilteredStats(
+            Long userId,
+            String role,
+            LocalDate from,
+            LocalDate to,
+            Long interviewerId,
+            String round) {
 
-            long applied = e.getValue().stream()
-                    .filter(v -> v.getEventType().equals("CANDIDATE_ADDED"))
-                    .count();
+        List<Long> jobIds;
 
-            long rej = e.getValue().stream()
-                    .filter(v -> v.getEventType().equals("CANDIDATE_REJECTED"))
-                    .count();
-
-            long off = e.getValue().stream()
-                    .filter(v -> v.getEventType().equals("OFFER_ACCEPTED"))
-                    .count();
-
-            jobStats.add(JobStatDto.builder()
-                    .jobId(e.getKey())
-                    .applied(applied)
-                    .rejected(rej)
-                    .offers(off)
-                    .build());
+        if ("ADMIN".equals(role)) {
+            jobIds = jobRepository.findAll()
+                    .stream().map(Job::getId).toList();
+        } else {
+            jobIds = jobRepository.findByCreatedBy(userId)
+                    .stream().map(Job::getId).toList();
         }
 
-        // ---- Recruiter Metrics ----
-        Map<Long, Long> recruiter =
-                auditRepo.findAll()
-                        .stream()
-                        .collect(Collectors.groupingBy(
-                                AuditLog::getUserId,
-                                Collectors.counting()
-                        ));
-
-        List<RecruiterMetricDto> metrics =
-                recruiter.entrySet().stream()
-                        .map(e -> RecruiterMetricDto.builder()
-                                .recruiterId(e.getKey())
-                                .actions(e.getValue())
-                                .build())
-                        .toList();
-
-        return CommonDashboardDto.builder()
-                .totalCandidates(total)
-                .totalRejected(rejected)
-                .totalOffers(offers)
-                .funnel(funnel)
-                .jobStats(jobStats)
-                .recruiterMetrics(metrics)
-                .build();
+        return buildDashboardForJobs(
+                jobIds, from, to, interviewerId, round);
     }
 
-    // ================= PERFORMANCE DASHBOARD =================
-
-    public PerformanceDto getPerformance(
-            Long candidateId,
-            Long jobId
-    ) {
+    // ============= CORE BUILDER =============
+    private CommonDashboardDto buildDashboardForJobs(
+            List<Long> jobIds,
+            LocalDate from,
+            LocalDate to,
+            Long interviewerId,
+            String round) {
 
         List<HiringEvent> events =
-                hiringRepo.findByCandidateId(candidateId);
+                hiringRepo.findAll()
+                        .stream()
+                        .filter(e -> jobIds.contains(e.getJobId()))
+                        .filter(e -> filterDate(e, from, to))
+                        .toList();
 
-        List<AuditLog> feedbackLogs =
-                auditRepo.findByAction("FEEDBACK_SUBMITTED");
+        long applied = count(events, "CANDIDATE_ADDED");
+        long rejected = count(events, "CANDIDATE_REJECTED");
+        long offers = count(events, "OFFER_ACCEPTED");
 
-        List<RoundFeedbackDto> rounds = feedbackLogs.stream()
-                .map(a -> RoundFeedbackDto.builder()
-                        .interviewId(a.getEntityId())
-                        .rating(
-                                Integer.valueOf(
-                                        extract(a.getMetaData(), "rating")
-                                )
-                        )
-                        .recommendation(
-                                extract(a.getMetaData(), "recommendation")
-                        )
-                        .build())
-                .toList();
+        Map<String, Long> funnel =
+                getStageFunnel(jobIds, from, to, round);
 
-        String finalRec =
-                rounds.stream()
-                        .map(RoundFeedbackDto::getRecommendation)
-                        .reduce((a, b) -> b)
-                        .orElse("PENDING");
-
-        return PerformanceDto.builder()
-                .candidateId(candidateId)
-                .jobId(jobId)
-                .rounds(rounds)
-                .finalRecommendation(finalRec)
+        return CommonDashboardDto.builder()
+                .totalCandidates(applied)
+                .totalRejected(rejected)
+                .totalOffers(offers)
+                .funnel(toDto(funnel))
                 .build();
     }
 
-    // ================= UTIL =================
+    // ============= UTIL METHODS =============
+
+    private boolean filterDate(
+            HiringEvent e,
+            LocalDate from,
+            LocalDate to) {
+
+        if (from == null && to == null) return true;
+
+        LocalDate date = e.getEventTime().toLocalDate();
+
+        if (from != null && date.isBefore(from))
+            return false;
+
+        if (to != null && date.isAfter(to))
+            return false;
+
+        return true;
+    }
+
+    private long count(
+            List<HiringEvent> events,
+            String type) {
+
+        return events.stream()
+                .filter(e -> e.getEventType().equals(type))
+                .count();
+    }
+
+    private Map<String, Long> getStageFunnel(
+            List<Long> jobIds,
+            LocalDate from,
+            LocalDate to,
+            String round) {
+
+        return auditRepo.findStageChanges()
+                .stream()
+                .filter(a -> jobIds.contains(a.getEntityId()))
+                .collect(Collectors.groupingBy(
+                        a -> extract(a.getMetaData(), "newStage"),
+                        Collectors.counting()
+                ));
+    }
+
+    private List<StageFunnelDto> toDto(
+            Map<String, Long> map) {
+
+        return map.entrySet()
+                .stream()
+                .map(e -> StageFunnelDto.builder()
+                        .stage(e.getKey())
+                        .count(e.getValue())
+                        .build())
+                .toList();
+    }
 
     private String extract(String meta, String key) {
         if (meta == null) return "";
+
         try {
             int i = meta.indexOf(key + "=");
             if (i == -1) return "";
@@ -157,6 +164,7 @@ public class AnalyticsService {
             return end == -1
                     ? meta.substring(start).replace("}", "")
                     : meta.substring(start, end);
+
         } catch (Exception e) {
             return "";
         }
