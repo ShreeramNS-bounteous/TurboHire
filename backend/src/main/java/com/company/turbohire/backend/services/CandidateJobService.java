@@ -8,8 +8,11 @@ import com.company.turbohire.backend.repository.*;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.company.turbohire.backend.notification.service.NotificationService;
+
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -27,6 +30,8 @@ public class CandidateJobService {
     private final CandidatePortalTokenRepository tokenRepository;
     private final JobRoundRepository jobRoundRepository;
     private final InterviewRepository interviewRepository;
+    private final NotificationService notificationService;
+
 
     // WRITE (candidate is already shortlisted externally)
     public Long addCandidateToPipeline(Long candidateId, Long jobId, Long buId, Long actorUserId) {
@@ -65,6 +70,16 @@ public class CandidateJobService {
 
         interviewRepository.save(interview);
 
+        systemLogger.audit(
+                actorUserId,
+                "INTERVIEW_CREATED",
+                "Interview",
+                interview.getId(),
+                Map.of(
+                        "roundId", firstRound.getId(),
+                        "candidateJobId", cj.getId()
+                )
+        );
 
         CandidateLock lock = CandidateLock.builder()
                 .candidate(candidate)
@@ -81,6 +96,18 @@ public class CandidateJobService {
 
         systemLogger.audit(actorUserId, "PIPELINE_ENTRY", "CANDIDATE_JOB", cj.getId());
         systemLogger.hiringEvent(candidateId, jobId, buId, "PIPELINE_ENTRY");
+
+        systemLogger.audit(
+                actorUserId,
+                "CANDIDATE_ADDED",
+                "CandidateJob",
+                cj.getId(),
+                Map.of(
+                        "jobId", jobId,
+                        "buId", buId,
+                        "stage", "SHORTLISTED"
+                )
+        );
 
         String token = UUID.randomUUID().toString();
 
@@ -106,13 +133,44 @@ public class CandidateJobService {
     public void moveStage(Long candidateJobId, String nextStage, Long actorUserId) {
 
         CandidateJob cj = candidateJobRepository.findById(candidateJobId).orElseThrow();
-        String prev = cj.getCurrentStage();
+        String prevStage = cj.getCurrentStage();
 
         cj.setCurrentStage(nextStage);
         candidateJobRepository.save(cj);
 
+        // 🔥 ONLY CANDIDATE MAIL
+        String token =
+                tokenRepository.findByCandidateJob(cj)
+                        .orElseThrow(() -> new RuntimeException("Portal token not found"))
+                        .getToken();
+
+        String portalLink =
+                "http://localhost:8080/api/candidate-portal?token=" + token;
+
+
+        notificationService.notifyCandidateStatus(
+                cj.getCandidate(),
+                portalLink,
+                nextStage
+        );
+        systemLogger.audit(
+                actorUserId,
+                "STAGE_CHANGED",
+                "CandidateJob",
+                candidateJobId,
+                Map.of(
+                        "oldStage", prevStage,
+                        "newStage", nextStage
+                )
+        );
+
         pipelineStageHistoryRepository.save(
-                PipelineStageHistory.create(candidateJobId, prev, nextStage, actorUserId)
+                PipelineStageHistory.create(
+                        candidateJobId,
+                        prevStage,
+                        nextStage,
+                        actorUserId
+                )
         );
     }
 
@@ -127,8 +185,38 @@ public class CandidateJobService {
 
         candidateLockRepository.releaseLock(cj.getCandidate().getId());
 
+        // 🔥 ONLY CANDIDATE
+        String token =
+                tokenRepository.findByCandidateJob(cj)
+                        .orElseThrow(() -> new RuntimeException("Portal token not found"))
+                        .getToken();
+
+        String portalLink =
+                "http://localhost:8080/api/candidate-portal?token=" + token;
+
+
+        systemLogger.audit(
+                actorUserId,
+                "CANDIDATE_REJECTED",
+                "CandidateJob",
+                candidateJobId,
+                Map.of("previousStage", prev)
+        );
+
+        systemLogger.hiringEvent(
+                cj.getCandidate().getId(),
+                cj.getJob().getId(),
+                cj.getBusinessUnit().getId(),
+                "CANDIDATE_REJECTED"
+        );
+
         pipelineStageHistoryRepository.save(
-                PipelineStageHistory.create(candidateJobId, prev, "REJECTED", actorUserId)
+                PipelineStageHistory.create(
+                        candidateJobId,
+                        prev,
+                        "REJECTED",
+                        actorUserId
+                )
         );
     }
 

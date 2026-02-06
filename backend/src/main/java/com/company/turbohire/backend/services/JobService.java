@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -46,10 +47,22 @@ public class JobService {
         Job updatedJob = jobRepository.save(job);
 
         // ✅ AUDIT LOG
-        systemLogger.audit(actorUserId, "PUBLISH_JOB", "JOB", jobId);
+        systemLogger.audit(
+                actorUserId,
+                "JOB_PUBLISHED",
+                "Job",
+                jobId,
+                Map.of("status", "PUBLISHED")
+        );
+
 
         return updatedJob;
     }
+
+    public List<Job> getJobsByCreator(Long userId) {
+        return jobRepository.findByCreatedBy(userId);
+    }
+
 
     // CLOSE JOB
     public Job closeJob(Long jobId, Long actorUserId) {
