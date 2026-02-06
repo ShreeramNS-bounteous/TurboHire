@@ -49,6 +49,8 @@ public class JobController {
         );
     }
 
+
+
     /**
      * PUBLISH JOB
      * HR / ADMIN ONLY
@@ -82,6 +84,24 @@ public class JobController {
                 jobService.closeJob(jobId, actorUserId)
         );
     }
+
+    @PutMapping("/{jobId}")
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
+    public void updateJob(
+            @PathVariable Long jobId,
+            @RequestBody UpdateJobRequest request
+    ) {
+        jobService.updateJob(jobId, request);
+    }
+
+    @DeleteMapping("/{jobId}")
+    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
+    public void deleteJob(
+            @PathVariable Long jobId
+    ) {
+        jobService.deleteJob(jobId);
+    }
+
 
     /**
      * READ: LIST JOBS
