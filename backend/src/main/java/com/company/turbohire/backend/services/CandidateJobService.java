@@ -3,11 +3,10 @@ package com.company.turbohire.backend.services;
 import com.company.turbohire.backend.common.SystemLogger;
 import com.company.turbohire.backend.entity.*;
 import com.company.turbohire.backend.enums.CandidateLockStatus;
-import com.company.turbohire.backend.enums.InterviewStatus;
 import com.company.turbohire.backend.repository.*;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,21 +22,41 @@ public class CandidateJobService {
     private final BURepository businessUnitRepository;
     private final CandidateLockRepository candidateLockRepository;
     private final PipelineStageHistoryRepository pipelineStageHistoryRepository;
-    private final SystemLogger systemLogger;
     private final CandidatePortalTokenRepository tokenRepository;
-    private final JobRoundRepository jobRoundRepository;
-    private final InterviewRepository interviewRepository;
+    private final SystemLogger systemLogger;
 
-    // WRITE (candidate is already shortlisted externally)
-    public Long addCandidateToPipeline(Long candidateId, Long jobId, Long buId, Long actorUserId) {
+    // ===============================
+    // ADD CANDIDATE TO PIPELINE
+    // ===============================
+    public Long addCandidateToPipeline(
+            Long candidateId,
+            Long jobId,
+            Long buId,
+            Long actorUserId
+    ) {
 
+        // 1️⃣ Validate input early (IMPORTANT)
+        if (candidateId == null || jobId == null || buId == null) {
+            throw new IllegalArgumentException("candidateId, jobId, buId must not be null");
+        }
+
+        // 2️⃣ Check candidate lock
         candidateLockRepository.findActiveLockByCandidateId(candidateId)
-                .ifPresent(l -> { throw new RuntimeException("Candidate locked"); });
+                .ifPresent(l -> {
+                    throw new RuntimeException("Candidate already locked in another pipeline");
+                });
 
-        Candidate candidate = candidateRepository.findById(candidateId).orElseThrow();
-        Job job = jobRepository.findById(jobId).orElseThrow();
-        BusinessUnit bu = businessUnitRepository.findById(buId).orElseThrow();
+        // 3️⃣ Fetch entities
+        Candidate candidate = candidateRepository.findById(candidateId)
+                .orElseThrow(() -> new RuntimeException("Candidate not found"));
 
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+
+        BusinessUnit bu = businessUnitRepository.findById(buId)
+                .orElseThrow(() -> new RuntimeException("Business Unit not found"));
+
+        // 4️⃣ Create CandidateJob (PIPELINE ENTRY)
         CandidateJob cj = CandidateJob.builder()
                 .candidate(candidate)
                 .job(job)
@@ -48,24 +67,7 @@ public class CandidateJobService {
 
         candidateJobRepository.save(cj);
 
-        JobRound firstRound = jobRoundRepository
-                .findByJob_Id(jobId)
-                .stream()
-                .filter(r -> r.getRoundOrder() == 1)
-                .findFirst()
-                .orElseThrow(() ->
-                        new RuntimeException("No first round defined for job")
-                );
-
-        Interview interview = Interview.builder()
-                .candidateJob(cj)
-                .round(firstRound)
-                .status(InterviewStatus.SCHEDULED)
-                .build();
-
-        interviewRepository.save(interview);
-
-
+        // 5️⃣ Lock candidate for this job + BU
         CandidateLock lock = CandidateLock.builder()
                 .candidate(candidate)
                 .lockedJob(job)
@@ -75,13 +77,32 @@ public class CandidateJobService {
 
         candidateLockRepository.save(lock);
 
+        // 6️⃣ Save pipeline history
         pipelineStageHistoryRepository.save(
-                PipelineStageHistory.create(cj.getId(), null, "SHORTLISTED", actorUserId)
+                PipelineStageHistory.create(
+                        cj.getId(),
+                        null,
+                        "SHORTLISTED",
+                        actorUserId
+                )
         );
 
-        systemLogger.audit(actorUserId, "PIPELINE_ENTRY", "CANDIDATE_JOB", cj.getId());
-        systemLogger.hiringEvent(candidateId, jobId, buId, "PIPELINE_ENTRY");
+        // 7️⃣ Audit logs
+        systemLogger.audit(
+                actorUserId,
+                "PIPELINE_ENTRY",
+                "CANDIDATE_JOB",
+                cj.getId()
+        );
 
+        systemLogger.hiringEvent(
+                candidateId,
+                jobId,
+                buId,
+                "PIPELINE_ENTRY"
+        );
+
+        // 8️⃣ Generate candidate portal token (for future use)
         String token = UUID.randomUUID().toString();
 
         CandidatePortalToken portalToken = CandidatePortalToken.builder()
@@ -91,63 +112,79 @@ public class CandidateJobService {
 
         tokenRepository.save(portalToken);
 
-        // ============================
-        // 📩 LOG PORTAL URL (LOCAL)
-        // ============================
-        String portalUrl =
-                "http://localhost:8080/api/candidate-portal?token=" + token;
-
-        System.out.println("📩 Candidate Portal URL: " + portalUrl);
-
+        System.out.println(
+                "📩 Candidate Portal URL: http://localhost:8080/api/candidate-portal?token=" + token
+        );
 
         return cj.getId();
     }
 
+    // ===============================
+    // MOVE PIPELINE STAGE
+    // ===============================
     public void moveStage(Long candidateJobId, String nextStage, Long actorUserId) {
 
-        CandidateJob cj = candidateJobRepository.findById(candidateJobId).orElseThrow();
-        String prev = cj.getCurrentStage();
+        CandidateJob cj = candidateJobRepository.findById(candidateJobId)
+                .orElseThrow(() -> new RuntimeException("CandidateJob not found"));
 
+        String prevStage = cj.getCurrentStage();
         cj.setCurrentStage(nextStage);
+
         candidateJobRepository.save(cj);
 
         pipelineStageHistoryRepository.save(
-                PipelineStageHistory.create(candidateJobId, prev, nextStage, actorUserId)
+                PipelineStageHistory.create(
+                        candidateJobId,
+                        prevStage,
+                        nextStage,
+                        actorUserId
+                )
         );
     }
 
+    // ===============================
+    // REJECT CANDIDATE
+    // ===============================
     public void reject(Long candidateJobId, Long actorUserId) {
 
-        CandidateJob cj = candidateJobRepository.findById(candidateJobId).orElseThrow();
-        String prev = cj.getCurrentStage();
+        CandidateJob cj = candidateJobRepository.findById(candidateJobId)
+                .orElseThrow(() -> new RuntimeException("CandidateJob not found"));
+
+        String prevStage = cj.getCurrentStage();
 
         cj.setCurrentStage("REJECTED");
         cj.setStatus("REJECTED");
+
         candidateJobRepository.save(cj);
 
         candidateLockRepository.releaseLock(cj.getCandidate().getId());
 
         pipelineStageHistoryRepository.save(
-                PipelineStageHistory.create(candidateJobId, prev, "REJECTED", actorUserId)
+                PipelineStageHistory.create(
+                        candidateJobId,
+                        prevStage,
+                        "REJECTED",
+                        actorUserId
+                )
         );
     }
 
-    // READ
+    // ===============================
+    // READ APIs
+    // ===============================
+    @Transactional(readOnly = true)
     public CandidateJob getCandidateJob(Long candidateJobId) {
-        return candidateJobRepository.findById(candidateJobId).orElseThrow();
+        return candidateJobRepository.findById(candidateJobId)
+                .orElseThrow(() -> new RuntimeException("CandidateJob not found"));
     }
 
+    @Transactional(readOnly = true)
     public List<CandidateJob> getCandidateJobs(Long candidateId) {
         return candidateJobRepository.findByCandidate_Id(candidateId);
     }
 
-    public List<PipelineStageHistory> getPipelineHistory(Long candidateJobId) {
-        return pipelineStageHistoryRepository.findByCandidateJobId(candidateJobId);
-    }
-
     @Transactional(readOnly = true)
     public List<CandidateJob> getActiveCandidatesByStage(String stage) {
-
         return candidateJobRepository.findByCurrentStageAndStatus(
                 stage,
                 "IN_PROGRESS"

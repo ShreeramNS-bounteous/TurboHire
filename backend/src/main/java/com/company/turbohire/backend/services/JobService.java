@@ -1,6 +1,7 @@
 package com.company.turbohire.backend.services;
 
 import com.company.turbohire.backend.common.SystemLogger;
+import com.company.turbohire.backend.dto.job.UpdateJobRequest;
 import com.company.turbohire.backend.entity.Job;
 import com.company.turbohire.backend.entity.JobRound;
 import com.company.turbohire.backend.repository.JobRepository;
@@ -19,6 +20,8 @@ public class JobService {
     private final JobRepository jobRepository;
     private final JobRoundRepository jobRoundRepository;
     private final SystemLogger systemLogger;
+
+
 
     // CREATE JOB
     public Job createJob(Job job, Long actorUserId) {
@@ -51,6 +54,40 @@ public class JobService {
         return updatedJob;
     }
 
+    @Transactional
+    public void updateJob(Long jobId, UpdateJobRequest req) {
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+
+        if (req.getTitle() != null)
+            job.setTitle(req.getTitle());
+
+        if (req.getLocation() != null)
+            job.setLocation(req.getLocation());
+
+        if (req.getExperienceMin() != null)
+            job.setExperienceMin(req.getExperienceMin());
+
+        if (req.getExperienceMax() != null)
+            job.setExperienceMax(req.getExperienceMax());
+
+        if (req.getStatus() != null)
+            job.setStatus(req.getStatus());
+
+        jobRepository.save(job);
+    }
+
+    @Transactional
+    public void deleteJob(Long jobId) {
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+
+        jobRepository.delete(job);
+    }
+
+
     // CLOSE JOB
     public Job closeJob(Long jobId, Long actorUserId) {
 
@@ -65,6 +102,7 @@ public class JobService {
 
         return updatedJob;
     }
+
 
     // READ - JOB BY ID (Frontend mandatory)
     @Transactional(readOnly = true)
