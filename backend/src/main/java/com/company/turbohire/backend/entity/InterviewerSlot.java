@@ -48,4 +48,11 @@ public class InterviewerSlot {
             this.status = SlotStatus.AVAILABLE; // ✅ Assign enum, not string
         }
     }
+
+    @Column(name = "posted_by")
+    private Long postedByInterviewerId;
+
+    @Column(name = "visible_to_hr")
+    private Long visibleToHrId;
+
 }

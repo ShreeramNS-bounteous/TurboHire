@@ -3,7 +3,10 @@ package com.company.turbohire.backend.controller;
 import com.company.turbohire.backend.dto.interviewer.*;
 import com.company.turbohire.backend.entity.InterviewerProfile;
 import com.company.turbohire.backend.entity.InterviewerSlot;
+import com.company.turbohire.backend.enums.SlotStatus;
+import com.company.turbohire.backend.security.util.SecurityUtils;
 import com.company.turbohire.backend.services.InterviewerService;
+import com.company.turbohire.backend.repository.InterviewerSlotRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,87 +22,71 @@ import java.util.stream.Collectors;
 public class InterviewerController {
 
     private final InterviewerService interviewerService;
+    private final InterviewerSlotRepository interviewerSlotRepository;
 
+    // ================= HR VIEW SLOTS =================
+    @GetMapping("/hr/slots")
     @PreAuthorize("hasRole('RECRUITER')")
-    @PostMapping
-    public ResponseEntity<InterviewerProfileResponseDto> createInterviewerProfile(
-            @RequestBody CreateInterviewerProfileRequestDto request
-    ) {
-        InterviewerProfile profile = interviewerService.createInterviewerProfile(
-                request.getUserId(),
-                request.getExpertise(),
-                request.getTimezone(),
-                request.getActorUserId()
-        );
+    public List<InterviewerSlotResponseDto> slotsForHr() {
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapToDto(profile));
+        Long hrId = SecurityUtils.getCurrentUserId();
+
+        return interviewerSlotRepository
+                .findByVisibleToHrIdAndStatus(hrId, SlotStatus.AVAILABLE)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
     }
 
-    @PreAuthorize("hasRole('RECRUITER')")
-    @GetMapping
-    public ResponseEntity<List<InterviewerProfileResponseDto>> listInterviewers() {
-        List<InterviewerProfileResponseDto> list = interviewerService.getAllInterviewerProfiles().stream()
-                .map(this::mapToDto).collect(Collectors.toList());
-        return ResponseEntity.ok(list);
-    }
-
-    @PreAuthorize("hasAnyRole('RECRUITER','USER')")
-    @GetMapping("/{id}")
-    public ResponseEntity<InterviewerProfileResponseDto> getInterviewerProfile(@PathVariable Long id) {
-        InterviewerProfile profile = interviewerService.getInterviewerProfile(id);
-        return ResponseEntity.ok(mapToDto(profile));
-    }
-
+    // ================= INTERVIEWER POST SLOT =================
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/slots")
     public ResponseEntity<InterviewerSlotResponseDto> addSlot(
             @PathVariable Long id,
             @RequestBody AddInterviewerSlotRequestDto request
     ) {
+
         InterviewerSlot slot = interviewerService.addInterviewerSlot(
                 id,
                 request.getSlotDate(),
                 request.getStartTime(),
                 request.getEndTime(),
-                request.getActorUserId()
+                SecurityUtils.getCurrentUserId(),
+                request.getHrId()
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapToDto(slot));
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(mapToDto(slot));
     }
 
-    @PreAuthorize("hasRole('USER')")
-    @DeleteMapping("/slots/{slotId}")
-    public ResponseEntity<Void> removeSlot(
-            @PathVariable Long slotId,
-            @RequestParam Long actorUserId
-    ) {
-        interviewerService.removeInterviewerSlot(slotId, actorUserId);
-        return ResponseEntity.ok().build();
+    // ================= PROFILE APIS =================
+
+    @PreAuthorize("hasRole('RECRUITER')")
+    @GetMapping
+    public ResponseEntity<List<InterviewerProfileResponseDto>> listInterviewers() {
+
+        List<InterviewerProfileResponseDto> list =
+                interviewerService.getAllInterviewerProfiles()
+                        .stream()
+                        .map(this::mapToDto)
+                        .collect(Collectors.toList());
+
+        return ResponseEntity.ok(list);
     }
 
     @PreAuthorize("hasAnyRole('RECRUITER','USER')")
-    @GetMapping("/{id}/slots")
-    public ResponseEntity<List<InterviewerSlotResponseDto>> getAllSlots(@PathVariable Long id) {
-        List<InterviewerSlotResponseDto> list = interviewerService.getAllSlots(id).stream()
-                .map(this::mapToDto).collect(Collectors.toList());
-        return ResponseEntity.ok(list);
+    @GetMapping("/{id}")
+    public ResponseEntity<InterviewerProfileResponseDto> getInterviewerProfile(
+            @PathVariable Long id) {
+
+        InterviewerProfile profile =
+                interviewerService.getInterviewerProfile(id);
+
+        return ResponseEntity.ok(mapToDto(profile));
     }
 
-    @PreAuthorize("hasRole('RECRUITER')")
-    @GetMapping("/{id}/slots/available")
-    public ResponseEntity<List<InterviewerSlotResponseDto>> getAvailableSlots(@PathVariable Long id) {
-        List<InterviewerSlotResponseDto> list = interviewerService.getAvailableSlots(id).stream()
-                .map(this::mapToDto).collect(Collectors.toList());
-        return ResponseEntity.ok(list);
-    }
-
-    private InterviewerProfileResponseDto mapToDto(InterviewerProfile p) {
-        return InterviewerProfileResponseDto.builder()
-                .id(p.getId())
-                .expertise(p.getExpertise())
-                .timezone(p.getTimezone())
-                .status(p.getStatus())
-                .build();
-    }
+    // ================= MAPPERS =================
 
     private InterviewerSlotResponseDto mapToDto(InterviewerSlot s) {
         return InterviewerSlotResponseDto.builder()
@@ -108,6 +95,15 @@ public class InterviewerController {
                 .startTime(s.getStartTime())
                 .endTime(s.getEndTime())
                 .status(s.getStatus())
+                .build();
+    }
+
+    private InterviewerProfileResponseDto mapToDto(InterviewerProfile p) {
+        return InterviewerProfileResponseDto.builder()
+                .id(p.getId())
+                .expertise(p.getExpertise())
+                .timezone(p.getTimezone())
+                .status(p.getStatus())
                 .build();
     }
 }

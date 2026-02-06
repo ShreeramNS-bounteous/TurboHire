@@ -110,11 +110,25 @@ public class JobController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
     public List<JobResponse> getAllJobs() {
-        return jobService.getAllJobs()
+
+        Long userId = SecurityUtils.getCurrentUserId();
+        String role = SecurityUtils.getCurrentUserRole();
+
+        // 🔥 ADMIN → see all
+        if ("ADMIN".equals(role)) {
+            return jobService.getAllJobs()
+                    .stream()
+                    .map(JobResponse::from)
+                    .toList();
+        }
+
+        // 🔐 HR → only own jobs
+        return jobService.getJobsByCreator(userId)
                 .stream()
                 .map(JobResponse::from)
                 .toList();
     }
+
 
     /**
      * READ: JOB DETAILS

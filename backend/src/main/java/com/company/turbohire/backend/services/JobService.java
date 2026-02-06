@@ -1,7 +1,6 @@
 package com.company.turbohire.backend.services;
 
 import com.company.turbohire.backend.common.SystemLogger;
-import com.company.turbohire.backend.dto.job.UpdateJobRequest;
 import com.company.turbohire.backend.entity.Job;
 import com.company.turbohire.backend.entity.JobRound;
 import com.company.turbohire.backend.repository.JobRepository;
@@ -11,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -20,8 +20,6 @@ public class JobService {
     private final JobRepository jobRepository;
     private final JobRoundRepository jobRoundRepository;
     private final SystemLogger systemLogger;
-
-
 
     // CREATE JOB
     public Job createJob(Job job, Long actorUserId) {
@@ -49,35 +47,20 @@ public class JobService {
         Job updatedJob = jobRepository.save(job);
 
         // ✅ AUDIT LOG
-        systemLogger.audit(actorUserId, "PUBLISH_JOB", "JOB", jobId);
+        systemLogger.audit(
+                actorUserId,
+                "JOB_PUBLISHED",
+                "Job",
+                jobId,
+                Map.of("status", "PUBLISHED")
+        );
+
 
         return updatedJob;
     }
 
-    @Transactional
-    public void updateJob(Long jobId, UpdateJobRequest req) {
-
-        Job job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
-
-        if (req.getTitle() != null)
-            job.setTitle(req.getTitle());
-
-        if (req.getLocation() != null)
-            job.setLocation(req.getLocation());
-
-        if (req.getExperienceMin() != null)
-            job.setExperienceMin(req.getExperienceMin());
-
-        if (req.getExperienceMax() != null)
-            job.setExperienceMax(req.getExperienceMax());
-
-        if (req.getStatus() != null)
-            job.setStatus(req.getStatus());
-
-        jobRepository.save(job);
-    }
-
+    public List<Job> getJobsByCreator(Long userId) {
+        return jobRepository.findByCreatedBy(userId);
     @Transactional
     public void deleteJob(Long jobId, Long actorUserId) {
 
@@ -105,7 +88,6 @@ public class JobService {
 
         return updatedJob;
     }
-
 
     // READ - JOB BY ID (Frontend mandatory)
     @Transactional(readOnly = true)
