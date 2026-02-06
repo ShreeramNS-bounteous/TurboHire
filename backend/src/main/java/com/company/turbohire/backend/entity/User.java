@@ -36,6 +36,10 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bu_id", nullable = false)
+    private BusinessUnit businessUnit;
+
     @Column(nullable = false)
     private String status; // ACTIVE / INACTIVE
 

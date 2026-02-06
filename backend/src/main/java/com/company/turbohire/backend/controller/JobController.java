@@ -20,15 +20,9 @@ public class JobController {
     private final JobService jobService;
     private final BURepository buRepository;
 
-    /**
-     * CREATE JOB
-     * HR / ADMIN ONLY
-     */
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
-    public JobResponse createJob(
-            @RequestBody CreateJobRequest req
-    ) {
+    public JobResponse createJob(@RequestBody CreateJobRequest req) {
 
         Long actorUserId = SecurityUtils.getCurrentUserId();
 
@@ -49,39 +43,27 @@ public class JobController {
         );
     }
 
-
-
-    /**
-     * PUBLISH JOB
-     * HR / ADMIN ONLY
-     */
     @PutMapping("/{jobId}/publish")
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
-    public JobResponse publishJob(
-            @PathVariable Long jobId
-    ) {
-
-        Long actorUserId = SecurityUtils.getCurrentUserId();
+    public JobResponse publishJob(@PathVariable Long jobId) {
 
         return JobResponse.from(
-                jobService.publishJob(jobId, actorUserId)
+                jobService.publishJob(
+                        jobId,
+                        SecurityUtils.getCurrentUserId()
+                )
         );
     }
 
-    /**
-     * CLOSE JOB
-     * HR / ADMIN ONLY
-     */
     @PutMapping("/{jobId}/close")
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
-    public JobResponse closeJob(
-            @PathVariable Long jobId
-    ) {
-
-        Long actorUserId = SecurityUtils.getCurrentUserId();
+    public JobResponse closeJob(@PathVariable Long jobId) {
 
         return JobResponse.from(
-                jobService.closeJob(jobId, actorUserId)
+                jobService.closeJob(
+                        jobId,
+                        SecurityUtils.getCurrentUserId()
+                )
         );
     }
 
@@ -97,33 +79,19 @@ public class JobController {
     @DeleteMapping("/{jobId}")
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
     public void deleteJob(@PathVariable Long jobId) {
-        Long actorUserId = SecurityUtils.getCurrentUserId();
-        jobService.deleteJob(jobId, actorUserId);
+
+        jobService.deleteJob(
+                jobId,
+                SecurityUtils.getCurrentUserId()
+        );
     }
 
-
-
-    /**
-     * READ: LIST JOBS
-     * ADMIN / HR / USER / CANDIDATE
-     */
+    // 🔥 BU-FILTERED LIST
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
     public List<JobResponse> getAllJobs() {
 
-        Long userId = SecurityUtils.getCurrentUserId();
-        String role = SecurityUtils.getCurrentUserRole();
-
-        // 🔥 ADMIN → see all
-        if ("ADMIN".equals(role)) {
-            return jobService.getAllJobs()
-                    .stream()
-                    .map(JobResponse::from)
-                    .toList();
-        }
-
-        // 🔐 HR → only own jobs
-        return jobService.getJobsByCreator(userId)
+        return jobService.getAllJobs()
                 .stream()
                 .map(JobResponse::from)
                 .toList();
@@ -136,38 +104,27 @@ public class JobController {
      */
     @GetMapping("/{jobId}")
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
-    public JobResponse getJobById(
-            @PathVariable Long jobId
-    ) {
+    public JobResponse getJobById(@PathVariable Long jobId) {
+
         return JobResponse.from(
                 jobService.getJobById(jobId)
         );
     }
 
-    /**
-     * READ: FILTER BY STATUS
-     * ADMIN / HR / USER / CANDIDATE
-     */
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
-    public List<JobResponse> getJobsByStatus(
-            @PathVariable String status
-    ) {
+    public List<JobResponse> getJobsByStatus(@PathVariable String status) {
+
         return jobService.getJobsByStatus(status)
                 .stream()
                 .map(JobResponse::from)
                 .toList();
     }
 
-    /**
-     * READ: FILTER BY ROUND
-     * ADMIN / HR / USER / CANDIDATE
-     */
     @GetMapping("/round/{roundName}")
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
-    public List<JobResponse> getJobsByRound(
-            @PathVariable String roundName
-    ) {
+    public List<JobResponse> getJobsByRound(@PathVariable String roundName) {
+
         return jobService.getJobsByRound(roundName)
                 .stream()
                 .map(JobResponse::from)

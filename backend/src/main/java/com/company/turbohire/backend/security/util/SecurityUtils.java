@@ -18,4 +18,11 @@ public final class SecurityUtils {
                 .getAuthentication()
                 .getPrincipal()).getRole();
     }
+
+    public static Long getCurrentBU() {
+        return ((AuthUser) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal()).getBuId();
+    }
+
 }

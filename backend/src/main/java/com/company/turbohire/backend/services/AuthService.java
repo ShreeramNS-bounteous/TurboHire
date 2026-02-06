@@ -27,7 +27,8 @@ public class AuthService {
         return jwtTokenProvider.generateToken(
                 authUser.getUserId(),
                 authUser.getEmail(),
-                authUser.getRole()
+                authUser.getRole(),
+                authUser.getBuId() // ✅ FIXED
         );
     }
 }
