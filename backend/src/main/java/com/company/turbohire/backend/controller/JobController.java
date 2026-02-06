@@ -96,11 +96,11 @@ public class JobController {
 
     @DeleteMapping("/{jobId}")
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
-    public void deleteJob(
-            @PathVariable Long jobId
-    ) {
-        jobService.deleteJob(jobId);
+    public void deleteJob(@PathVariable Long jobId) {
+        Long actorUserId = SecurityUtils.getCurrentUserId();
+        jobService.deleteJob(jobId, actorUserId);
     }
+
 
 
     /**

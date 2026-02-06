@@ -79,12 +79,15 @@ public class JobService {
     }
 
     @Transactional
-    public void deleteJob(Long jobId) {
+    public void deleteJob(Long jobId, Long actorUserId) {
 
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
 
-        jobRepository.delete(job);
+        job.setStatus("DELETED");
+        jobRepository.save(job);
+
+        systemLogger.audit(actorUserId, "DELETE_JOB", "JOB", jobId);
     }
 
 
