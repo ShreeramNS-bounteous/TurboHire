@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -36,13 +35,7 @@ public class OfferService {
         candidateJobRepository.save(cj);
 
         // ✅ AUDIT (MANDATORY)
-        systemLogger.audit(
-                actorUserId,
-                "OFFER_RELEASED",
-                "Offer",
-                candidateJobId,
-                Map.of("ctc", ctc)
-        );
+        systemLogger.audit(actorUserId, "RELEASE_OFFER", "CANDIDATE_JOB", candidateJobId);
         systemLogger.hiringEvent(
                 cj.getCandidate().getId(),
                 cj.getJob().getId(),

@@ -1,6 +1,7 @@
 package com.company.turbohire.backend.services;
 
 import com.company.turbohire.backend.common.SystemLogger;
+import com.company.turbohire.backend.dto.job.UpdateJobRequest;
 import com.company.turbohire.backend.entity.Job;
 import com.company.turbohire.backend.entity.JobRound;
 import com.company.turbohire.backend.repository.JobRepository;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +23,6 @@ public class JobService {
     private final SystemLogger systemLogger;
 
     // CREATE JOB (NO CHANGE)
-    // CREATE JOB
     public Job createJob(Job job, Long actorUserId) {
 
         job.setStatus("ON_HOLD");
@@ -124,14 +123,12 @@ public class JobService {
     // READ - ALL JOBS (🔥 MAIN FIX)
     @Transactional(readOnly = true)
     public List<Job> getAllJobs() {
-        Long buId = SecurityUtils.getCurrentBU();
 
         return jobRepository.findByBusinessUnit_IdAndStatusNot(
-                buId,
+                SecurityUtils.getCurrentBU(), // 🔑 BU FILTER
                 "DELETED"
         );
     }
-
 
     // READ - JOBS BY STATUS (BU FILTER)
     @Transactional(readOnly = true)

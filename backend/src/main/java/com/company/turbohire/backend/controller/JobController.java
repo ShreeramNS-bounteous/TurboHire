@@ -90,13 +90,15 @@ public class JobController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
     public List<JobResponse> getAllJobs() {
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of 235c03f (Merge pull request #28 from ShreeramNS-bounteous/feature/candidate)
         return jobService.getAllJobs()
                 .stream()
                 .map(JobResponse::from)
                 .toList();
     }
-
 
     /**
      * READ: JOB DETAILS

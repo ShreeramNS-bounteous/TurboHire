@@ -9,7 +9,6 @@ import java.util.Optional;
 @Repository
 public interface JobRepository extends JpaRepository<Job,Long> {
     List<Job> findByStatus(String status);
-    List<Job> findByCreatedBy(Long userId);
 
     List<Job> findByStatusNot(String status);
 
