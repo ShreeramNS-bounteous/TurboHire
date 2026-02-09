@@ -18,13 +18,18 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
 
     List<Interview> findByCandidateJob_Job_Id(Long jobId);
 
-    @Query("""
-  SELECT i FROM Interview i
-  WHERE i.status='COMPLETED'
-  AND NOT EXISTS (
-     SELECT f FROM InterviewFeedback f
-     WHERE f.interview.id = i.id
-  )
-""")
-    List<Interview> findPendingFeedback();
+
+//    @Query("""
+//        SELECT i
+//        FROM Interview i
+//        JOIN InterviewAssignment ia ON ia.interview = i
+//        WHERE ia.interviewer.id = :interviewerId
+//          AND NOT EXISTS (
+//              SELECT 1
+//              FROM InterviewFeedback f
+//              WHERE f.interview = i
+//                AND f.interviewer.id = :interviewerId
+//          )
+//    """)
+//    List<Interview> findPendingFeedbackInterviews(Long interviewerId);
 }

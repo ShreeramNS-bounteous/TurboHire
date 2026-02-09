@@ -14,5 +14,4 @@ public class AddInterviewerSlotRequestDto {
     private LocalTime startTime;
     private LocalTime endTime;
     private Long actorUserId; // the user performing the action
-    private Long hrId;
 }

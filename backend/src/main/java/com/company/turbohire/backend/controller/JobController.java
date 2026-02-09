@@ -90,13 +90,11 @@ public class JobController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
     public List<JobResponse> getAllJobs() {
-
         return jobService.getAllJobs()
                 .stream()
                 .map(JobResponse::from)
                 .toList();
     }
-
 
     /**
      * READ: JOB DETAILS

@@ -46,7 +46,4 @@ public class Job {
         this.createdAt = LocalDateTime.now();
         this.status = "OPEN";
     }
-
-    @Column(name = "created_by")
-    private Long createdBy;
 }
