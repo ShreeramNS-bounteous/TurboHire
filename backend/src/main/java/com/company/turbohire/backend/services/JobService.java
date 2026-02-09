@@ -1,6 +1,7 @@
 package com.company.turbohire.backend.services;
 
 import com.company.turbohire.backend.common.SystemLogger;
+import com.company.turbohire.backend.dto.job.UpdateJobRequest;
 import com.company.turbohire.backend.entity.Job;
 import com.company.turbohire.backend.entity.JobRound;
 import com.company.turbohire.backend.repository.JobRepository;
