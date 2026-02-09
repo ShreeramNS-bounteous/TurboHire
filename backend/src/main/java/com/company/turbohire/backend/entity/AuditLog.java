@@ -35,5 +35,8 @@ public class AuditLog {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @Column(columnDefinition = "jsonb")
+    private String metaData;
 }
 

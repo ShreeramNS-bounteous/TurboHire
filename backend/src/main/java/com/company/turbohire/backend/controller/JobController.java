@@ -97,6 +97,11 @@ public class JobController {
                 .toList();
     }
 
+
+    /**
+     * READ: JOB DETAILS
+     * ADMIN / HR / USER / CANDIDATE
+     */
     @GetMapping("/{jobId}")
     @PreAuthorize("hasAnyRole('ADMIN','RECRUITER','USER')")
     public JobResponse getJobById(@PathVariable Long jobId) {
