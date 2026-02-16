@@ -55,6 +55,7 @@ function App() {
             element={<AddExistingCandidate />}
           />
           <Route path="interviews" element={<InterviewDashboard />} />
+          <Route path="interviews/:jobId" element={<InterviewDashboard />} />
         </Route>
 
         <Route

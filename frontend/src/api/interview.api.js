@@ -1,10 +1,18 @@
 import api from "./axios";
 
 
-export const fetchPendingInterviews = async () => {
-  const res = await api.get("/api/interviews/to-be-scheduled");
-  return res.data;
+export const fetchPendingInterviews = (jobId) => {
+  if (jobId) {
+    return api
+      .get(`/api/interviews/to-be-scheduled?jobId=${jobId}`)
+      .then(res => res.data);
+  }
+
+  return api
+    .get(`/api/interviews/to-be-scheduled`)
+    .then(res => res.data);
 };
+
 
 export const createInterview = async (candidateJobId) => {
   const res = await api.post("/api/interviews", {
@@ -21,15 +29,31 @@ export const bookInterviewSlot = async (interviewId, payload) => {
   });
 };
 
-export const fetchScheduledInterviews = async () => {
-  const res = await api.get("/api/interviews/scheduled");
-  return res.data;
+export const fetchScheduledInterviews = (jobId) => {
+  if (jobId) {
+    return api
+      .get(`/api/interviews/scheduled?jobId=${jobId}`)
+      .then(res => res.data);
+  }
+
+  return api
+    .get(`/api/interviews/scheduled`)
+    .then(res => res.data);
 };
 
-export const fetchCompletedInterviews = async () => {
-  const res = await api.get("/api/interviews/completed");
-  return res.data;
+
+export const fetchCompletedInterviews = (jobId) => {
+  if (jobId) {
+    return api
+      .get(`/api/interviews/completed?jobId=${jobId}`)
+      .then(res => res.data);
+  }
+
+  return api
+    .get(`/api/interviews/completed`)
+    .then(res => res.data);
 };
+
 
 
 

@@ -201,7 +201,8 @@ public class InterviewService {
     }
 
     @Transactional(readOnly = true)
-    public List<PendingInterviewDto> getPendingInterviews() {
+    public List<PendingInterviewDto> getPendingInterviews(Long jobId)
+    {
 
         // 1️⃣ Get shortlisted candidates
         List<CandidateJob> activeCandidates =
@@ -214,6 +215,10 @@ public class InterviewService {
                         cj.getJob() != null &&
                         !"DELETED".equalsIgnoreCase(cj.getJob().getStatus())
                         )
+                .filter(cj ->
+                        jobId == null || cj.getJob().getId().equals(jobId)
+                )
+
 
                 .filter(cj ->
                         !interviewRepository.existsByCandidateJob_IdAndRound_RoundNameAndStatusIn(
@@ -241,10 +246,22 @@ public class InterviewService {
 
 
     @Transactional(readOnly = true)
-    public List<ScheduledInterviewDto> getScheduledInterviews() {
+    public List<ScheduledInterviewDto> getScheduledInterviews(Long jobId) {
 
         List<Interview> interviews =
                 interviewRepository.findByStatus(InterviewStatus.SCHEDULED);
+
+        // ✅ NEW FILTER (SAFE)
+        if (jobId != null) {
+            interviews = interviews.stream()
+                    .filter(i ->
+                            i.getCandidateJob()
+                                    .getJob()
+                                    .getId()
+                                    .equals(jobId)
+                    )
+                    .toList();
+        }
 
         return interviews.stream().map(interview -> {
 
@@ -319,10 +336,22 @@ public class InterviewService {
 
 
     @Transactional(readOnly = true)
-    public List<CompletedInterviewDto> getCompletedInterviews() {
+    public List<CompletedInterviewDto> getCompletedInterviews(Long jobId) {
 
         List<Interview> interviews =
                 interviewRepository.findByStatus(InterviewStatus.COMPLETED);
+
+        if (jobId != null) {
+            interviews = interviews.stream()
+                    .filter(i ->
+                            i.getCandidateJob()
+                                    .getJob()
+                                    .getId()
+                                    .equals(jobId)
+                    )
+                    .toList();
+        }
+
 
         return interviews.stream().map(interview -> {
 

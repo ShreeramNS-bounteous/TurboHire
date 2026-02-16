@@ -6,6 +6,8 @@ import PendingInterviewList from "./PendingInterviewList";
 import ScheduledInterviewList from "./ScheduledInterviewList";
 import BookSlotModal from "./BookSlotModal";
 import CompletedInterviewList from "./CompletedInterviewList";
+import { useParams } from "react-router-dom";
+
 
 import { fetchAvailableInterviewers } from "../../../api/interviewerAvailability.api";
 import {
@@ -38,20 +40,27 @@ export default function InterviewPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
 
+  const { jobId } = useParams();
+
+
+
   // =====================================
   // LOAD DATA BASED ON TAB
   // =====================================
   useEffect(() => {
     if (activeTab === "PENDING") {
-      fetchPendingInterviews().then(setPendingInterviews);
+      fetchPendingInterviews(jobId).then(setPendingInterviews);
     }
+  
     if (activeTab === "SCHEDULED") {
-      fetchScheduledInterviews().then(setScheduledInterviews);
+      fetchScheduledInterviews(jobId).then(setScheduledInterviews);
     }
+  
     if (activeTab === "COMPLETED") {
-      fetchCompletedInterviews().then(setCompletedInterviews);
+      fetchCompletedInterviews(jobId).then(setCompletedInterviews);
     }
-  }, [activeTab]);
+  }, [activeTab, jobId]);
+  
 
   // =====================================
   // SCHEDULE CLICK (NO INTERVIEW CREATED YET)
@@ -98,8 +107,9 @@ export default function InterviewPage() {
       setIsModalOpen(false);
       setSelectedInterview(null);
 
-      const data = await fetchPendingInterviews();
-      setPendingInterviews(data);
+      const data = await fetchPendingInterviews(jobId);
+setPendingInterviews(data);
+
     } catch (err) {
       toast.error("Error booking slot", err);
     }
@@ -200,8 +210,9 @@ export default function InterviewPage() {
           <CompletedInterviewList
             interviews={completedInterviews}
             onActionComplete={async () => {
-              const updatedCompleted = await fetchCompletedInterviews();
-              const updatedPending = await fetchPendingInterviews();
+              const updatedCompleted = await fetchCompletedInterviews(jobId);
+              const updatedPending = await fetchPendingInterviews(jobId);
+            
 
               setCompletedInterviews(updatedCompleted);
               setPendingInterviews(updatedPending);
