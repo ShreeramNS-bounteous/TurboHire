@@ -13,20 +13,20 @@ import lombok.*;
 public class InterviewerProfile {
 
     @Id
-    private Long id;   // same as users.id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @OneToOne(optional = false)
-    @MapsId
-    @JoinColumn(name = "interviewer_id")
-    private User user;
+    @Column(name = "user_id", nullable = false, unique = true)
+    private Long userId;
 
-    private String expertise; // Java, System Design, React
+    // Employee details
+    private String expertise;
+    // skills
+    @Column(name = "experience_years")
+    private int experienceYears;
 
-    private String timezone;  // IST, PST, CET
-
-    @Column(nullable = false)
-    private String status;    // ACTIVE / INACTIVE
-
-
+    // Interviewer flag
+    @Column(name = "is_interviewer", nullable = false)
+    private boolean isInterviewer;   // 👈 KEY CHANGE
 
 }

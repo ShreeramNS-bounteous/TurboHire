@@ -1,9 +1,12 @@
 package com.company.turbohire.backend.services;
 
 import com.company.turbohire.backend.common.SystemLogger;
+import com.company.turbohire.backend.dto.interviewFeedback.SubmitFeedbackRequestDto;
 import com.company.turbohire.backend.entity.Interview;
 import com.company.turbohire.backend.entity.InterviewFeedback;
 import com.company.turbohire.backend.entity.User;
+import com.company.turbohire.backend.enums.DecisionStatus;
+import com.company.turbohire.backend.enums.InterviewStatus;
 import com.company.turbohire.backend.repository.InterviewFeedbackRepository;
 import com.company.turbohire.backend.repository.InterviewRepository;
 import com.company.turbohire.backend.repository.UserRepository;
@@ -26,34 +29,34 @@ public class InterviewFeedbackService {
     /**
      * Submit feedback for an interview
      */
-    public InterviewFeedback submitFeedback(Long interviewId, Long interviewerUserId,
-                                            Integer rating, String recommendation, String comments,
-                                            Long actorUserId) {
-
-        if (feedbackRepository.existsByInterview_IdAndInterviewer_Id(interviewId, interviewerUserId)) {
-            throw new RuntimeException("Feedback already submitted for this interview by this interviewer");
-        }
+    @Transactional
+    public void submitFeedback(Long interviewId,
+                               SubmitFeedbackRequestDto request,
+                               Long actorUserId) {
 
         Interview interview = interviewRepository.findById(interviewId)
                 .orElseThrow(() -> new RuntimeException("Interview not found"));
 
-        User interviewer = userRepository.findById(interviewerUserId)
-                .orElseThrow(() -> new RuntimeException("Interviewer not found"));
+        if (interview.getStatus() != InterviewStatus.COMPLETED) {
+            throw new RuntimeException("Interview must be completed before feedback");
+        }
+
+        User interviewer = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         InterviewFeedback feedback = InterviewFeedback.builder()
                 .interview(interview)
                 .interviewer(interviewer)
-                .rating(rating)
-                .recommendation(recommendation)
-                .comments(comments)
+                .rating(request.getRating())
+                .recommendation(request.getRecommendation())
+                .comments(request.getComments())
                 .build();
 
-        InterviewFeedback saved = feedbackRepository.save(feedback);
+        feedbackRepository.save(feedback);
 
-        // Audit log
-        systemLogger.audit(actorUserId, "SUBMIT_FEEDBACK", "INTERVIEW_FEEDBACK", saved.getId());
-
-        return saved;
+        interview.setFeedbackSubmitted(true);
+        interview.setDecisionStatus(DecisionStatus.PENDING_DECISION);
+        interviewRepository.save(interview);
     }
 
     /**

@@ -1,15 +1,15 @@
 package com.company.turbohire.backend.dto.interviewer;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class CreateInterviewerProfileRequestDto {
+
     private Long userId;
     private String expertise;
-    private String timezone;
-    private Long actorUserId; // the user performing the action
+    private int experienceYears;
+    private String department;
+    private boolean interviewer; // isInterviewer
 }

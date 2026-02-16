@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface InterviewFeedbackRepository extends JpaRepository<InterviewFeedback, Long> {
@@ -19,6 +20,7 @@ public interface InterviewFeedbackRepository extends JpaRepository<InterviewFeed
 
     List<InterviewFeedback> findByInterview_CandidateJob_Candidate_Id(Long candidateId);
 
+    Optional<InterviewFeedback> findByInterview_Id(Long interviewId);
 
 
 //    @Query("""

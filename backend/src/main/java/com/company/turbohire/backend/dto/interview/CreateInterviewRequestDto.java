@@ -9,5 +9,4 @@ import lombok.*;
 @Builder
 public class CreateInterviewRequestDto {
     private Long candidateJobId;
-    private Long jobRoundId;
 }

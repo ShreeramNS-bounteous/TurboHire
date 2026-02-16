@@ -1,6 +1,7 @@
 package com.company.turbohire.backend.services;
 
 import com.company.turbohire.backend.common.SystemLogger;
+import com.company.turbohire.backend.dto.candidate.CandidateSimpleDto;
 import com.company.turbohire.backend.entity.Candidate;
 import com.company.turbohire.backend.entity.CandidateProfile;
 import com.company.turbohire.backend.entity.Resume;
@@ -70,11 +71,28 @@ public class CandidateService {
                 .orElseThrow(() -> new RuntimeException("Resume not found"));
     }
 
+    @Transactional(readOnly = true)
+    public List<CandidateSimpleDto> getAvailableCandidatesForJob(Long jobId) {
+
+        return candidateRepository
+                .findAvailableCandidatesForJob(jobId)
+                .stream()
+                .map(c -> new CandidateSimpleDto(
+                        c.getId(),
+                        c.getFullName(),
+                        c.getEmail(),
+                        c.getPhone()
+                ))
+                .toList();
+    }
+
+
 
     // READ
     public List<Candidate> getAllCandidates() {
         return candidateRepository.findAll();
     }
+
 
 
 

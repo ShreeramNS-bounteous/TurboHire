@@ -20,7 +20,11 @@ public interface JobRoundRepository extends JpaRepository<JobRound, Long> {
     // ✅ Used when creating interview
     Optional<JobRound> findFirstByJob_IdOrderByRoundOrderAsc(Long jobId);
 
-    List<JobRound> findByJob_Id(Long jobId);
+    Optional<JobRound> findByJob_IdAndRoundOrder(
+            Long jobId,
+            Integer roundOrder
+    );
+
 
 
 }

@@ -2,8 +2,10 @@ package com.company.turbohire.backend.controller;
 
 import com.company.turbohire.backend.dto.interviewFeedback.InterviewFeedbackResponseDto;
 import com.company.turbohire.backend.dto.interviewFeedback.PendingInterviewResponseDto;
-import com.company.turbohire.backend.dto.interviewFeedback.SubmitInterviewFeedbackRequestDto;
+import com.company.turbohire.backend.dto.interviewFeedback.SubmitFeedbackRequestDto;
+import com.company.turbohire.backend.dto.interviewFeedback.SubmitFeedbackRequestDto;
 import com.company.turbohire.backend.entity.InterviewFeedback;
+import com.company.turbohire.backend.security.util.SecurityUtils;
 import com.company.turbohire.backend.services.InterviewFeedbackService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,20 +27,17 @@ public class InterviewFeedbackController {
      * Submit feedback for an interview
      */
     @PreAuthorize("hasRole('USER')")
-    @PostMapping
-    public ResponseEntity<InterviewFeedbackResponseDto> submitFeedback(
-            @RequestBody SubmitInterviewFeedbackRequestDto request,
-            @RequestParam("actorUserId") Long actorUserId
+    @PostMapping("/{id}/submit")
+    public ResponseEntity<Void> submitFeedback(
+            @PathVariable Long id,
+            @RequestBody SubmitFeedbackRequestDto request
     ) {
-        InterviewFeedback feedback = feedbackService.submitFeedback(
-                request.getInterviewId(),
-                request.getInterviewerUserId(),
-                request.getRating(),
-                request.getRecommendation(),
-                request.getComments(),
-                actorUserId
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapToDto(feedback));
+
+        Long actorUserId = SecurityUtils.getCurrentUserId();
+
+        feedbackService.submitFeedback(id, request, actorUserId);
+
+        return ResponseEntity.ok().build();
     }
 
     /**
