@@ -1,5 +1,6 @@
 import JobActionsMenu from "./JobActionsMenu";
 import { buildJobCounts } from "./JobCountsUtil";
+import { useNavigate } from "react-router-dom";
 
 export default function JobCard({
   job,
@@ -15,10 +16,15 @@ export default function JobCard({
     rounds,
   });
 
+  const navigate = useNavigate();
+
   const isClosed = job.status === "CLOSED";
 
   return (
-    <div className="bg-white rounded-lg shadow border relative">
+    <div
+      className="bg-white rounded-lg shadow border relative cursor-pointer hover:shadow-md transition"
+      onClick={() => navigate(`/recruiter/interviews/${job.id}`)}
+    >
       {/* Header */}
       <div className="flex justify-between p-6">
         <div>
@@ -48,6 +54,7 @@ export default function JobCard({
 
         {/* ACTIONS */}
         <JobActionsMenu
+          onClick={(e) => e.stopPropagation()}
           jobId={job.id}
           jobStatus={job.status}
           onJobDeleted={onJobDeleted}

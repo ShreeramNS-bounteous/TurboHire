@@ -69,19 +69,25 @@ public class InterviewController {
 
     @PreAuthorize("hasRole('RECRUITER')")
     @GetMapping("/scheduled")
-    public ResponseEntity<List<ScheduledInterviewDto>> getScheduledInterviews() {
-
-        List<ScheduledInterviewDto> list =
-                interviewService.getScheduledInterviews();
-
-        return ResponseEntity.ok(list);
+    public ResponseEntity<List<ScheduledInterviewDto>> getScheduledInterviews(
+            @RequestParam(required = false) Long jobId
+    ) {
+        return ResponseEntity.ok(
+                interviewService.getScheduledInterviews(jobId)
+        );
     }
+
 
     @PreAuthorize("hasRole('RECRUITER')")
     @GetMapping("/completed")
-    public ResponseEntity<List<CompletedInterviewDto>> getCompleted() {
-        return ResponseEntity.ok(interviewService.getCompletedInterviews());
+    public ResponseEntity<List<CompletedInterviewDto>> getCompleted(
+            @RequestParam(required = false) Long jobId
+    ) {
+        return ResponseEntity.ok(
+                interviewService.getCompletedInterviews(jobId)
+        );
     }
+
 
 
     @PreAuthorize("hasRole('USER')")
@@ -135,13 +141,15 @@ public class InterviewController {
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasRole('RECRUITER')")
     @GetMapping("/to-be-scheduled")
-    public ResponseEntity<List<PendingInterviewDto>> getToBeScheduled() {
+    public ResponseEntity<List<PendingInterviewDto>> getToBeScheduled(
+            @RequestParam(required = false) Long jobId
+    ) {
         return ResponseEntity.ok(
-                interviewService.getPendingInterviews()
+                interviewService.getPendingInterviews(jobId)
         );
     }
+
 
     @PreAuthorize("hasRole('RECRUITER')")
     @PostMapping("/{id}/move-next")
