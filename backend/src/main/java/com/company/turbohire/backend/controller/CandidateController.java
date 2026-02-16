@@ -7,6 +7,7 @@ import com.company.turbohire.backend.entity.Resume;
 import com.company.turbohire.backend.security.util.SecurityUtils;
 import com.company.turbohire.backend.services.CandidateService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -108,6 +109,17 @@ public class CandidateController {
     ) {
         return candidateService.getResume(candidateId);
     }
+
+    @GetMapping("/available/{jobId}")
+    public ResponseEntity<List<CandidateSimpleDto>> getAvailableCandidates(
+            @PathVariable Long jobId
+    ) {
+        return ResponseEntity.ok(
+                candidateService.getAvailableCandidatesForJob(jobId)
+        );
+    }
+
+
 
     /**
      * UPDATE candidate

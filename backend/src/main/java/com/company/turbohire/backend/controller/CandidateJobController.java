@@ -49,49 +49,6 @@ public class CandidateJobController {
     }
 
     // ==============================
-    // 2️⃣ MOVE STAGE
-    // HR / ADMIN ONLY
-    // PUT /api/pipeline/{id}/stage
-    // ==============================
-    @PutMapping("/{id}/stage")
-    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
-    public PipelineResponse moveStage(
-            @PathVariable Long id,
-            @RequestBody MoveStageRequest request
-    ) {
-
-        Long actorUserId = SecurityUtils.getCurrentUserId();
-
-        candidateJobService.moveStage(
-                id,
-                request.getNextStage(),
-                actorUserId
-        );
-
-        CandidateJob updated = candidateJobRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("CandidateJob not found"));
-
-        return mapToResponse(updated);
-    }
-
-    // ==============================
-    // 3️⃣ REJECT CANDIDATE
-    // HR / ADMIN ONLY
-    // PUT /api/pipeline/{id}/reject
-    // ==============================
-    @PutMapping("/{id}/reject")
-    @PreAuthorize("hasAnyRole('ADMIN','RECRUITER')")
-    public PipelineResponse rejectCandidate(@PathVariable Long id) {
-
-        Long actorUserId = SecurityUtils.getCurrentUserId();
-
-        candidateJobService.reject(id, actorUserId);
-
-        CandidateJob updated = candidateJobRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("CandidateJob not found"));
-
-        return mapToResponse(updated);
-    }
 
     // ==============================
     // 4️⃣ GET PIPELINE DETAILS

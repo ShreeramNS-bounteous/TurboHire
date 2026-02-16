@@ -20,18 +20,23 @@ public class InterviewController {
 
     private final InterviewService interviewService;
 
-    @PreAuthorize("hasRole('RECRUITER')")
     @PostMapping
+    @PreAuthorize("hasRole('RECRUITER')")
     public ResponseEntity<InterviewResponseDto> createInterview(
             @RequestBody CreateInterviewRequestDto request
-
     ) {
+
         Long actorUserId = SecurityUtils.getCurrentUserId();
-        Interview interview = interviewService.createInterview(request.getCandidateJobId(),
-                request.getJobRoundId(), actorUserId);
-        InterviewResponseDto dto = mapToDto(interview);
-        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+
+        Interview interview = interviewService.createInterview(
+                request.getCandidateJobId(),
+                actorUserId
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(mapToDto(interview));
     }
+
 
     @PreAuthorize("hasRole('RECRUITER')")
     @PostMapping("/{id}/assign-interviewer")
@@ -49,9 +54,56 @@ public class InterviewController {
             @PathVariable Long id,
             @RequestBody BookInterviewSlotRequestDto request
     ) {
-        interviewService.bookInterviewSlot(id, request.getInterviewerSlotId(), request.getBookedByUserId());
+
+        Long actorUserId = SecurityUtils.getCurrentUserId();  // 🔥 derive automatically
+
+        interviewService.bookInterviewSlot(
+                id,
+                request.getInterviewerSlotId(),
+                actorUserId,
+                request.getMeetingUrl()
+        );
+
         return ResponseEntity.ok().build();
     }
+
+    @PreAuthorize("hasRole('RECRUITER')")
+    @GetMapping("/scheduled")
+    public ResponseEntity<List<ScheduledInterviewDto>> getScheduledInterviews() {
+
+        List<ScheduledInterviewDto> list =
+                interviewService.getScheduledInterviews();
+
+        return ResponseEntity.ok(list);
+    }
+
+    @PreAuthorize("hasRole('RECRUITER')")
+    @GetMapping("/completed")
+    public ResponseEntity<List<CompletedInterviewDto>> getCompleted() {
+        return ResponseEntity.ok(interviewService.getCompletedInterviews());
+    }
+
+
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/{id}/attendance")
+    public ResponseEntity<Void> markAttendance(
+            @PathVariable Long id,
+            @RequestBody MarkAttendanceRequestDto request
+    ) {
+        Long actorUserId = SecurityUtils.getCurrentUserId();
+
+        interviewService.markAttendance(
+                id,
+                request.getAttendanceStatus()
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
+
+
+
+
 
     @PreAuthorize("hasAnyRole('RECRUITER','USER')")
     @GetMapping("/{id}")
@@ -82,6 +134,50 @@ public class InterviewController {
         interviewService.cancelInterview(id);
         return ResponseEntity.ok().build();
     }
+
+    @PreAuthorize("hasRole('RECRUITER')")
+    @GetMapping("/to-be-scheduled")
+    public ResponseEntity<List<PendingInterviewDto>> getToBeScheduled() {
+        return ResponseEntity.ok(
+                interviewService.getPendingInterviews()
+        );
+    }
+
+    @PreAuthorize("hasRole('RECRUITER')")
+    @PostMapping("/{id}/move-next")
+    public ResponseEntity<Void> moveToNextRound(@PathVariable Long id) {
+
+        Long actorUserId = SecurityUtils.getCurrentUserId();
+
+        interviewService.moveToNextRound(id, actorUserId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('RECRUITER')")
+    @PostMapping("/{id}/hire")
+    public ResponseEntity<Void> hireCandidate(@PathVariable Long id) {
+
+        Long actorUserId = SecurityUtils.getCurrentUserId();
+
+        interviewService.hireCandidate(id, actorUserId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('RECRUITER')")
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<Void> rejectCandidate(@PathVariable Long id) {
+
+        Long actorUserId = SecurityUtils.getCurrentUserId();
+
+        interviewService.rejectCandidate(id, actorUserId);
+
+        return ResponseEntity.ok().build();
+    }
+
+
+
 
     private InterviewResponseDto mapToDto(Interview i) {
         return InterviewResponseDto.builder()

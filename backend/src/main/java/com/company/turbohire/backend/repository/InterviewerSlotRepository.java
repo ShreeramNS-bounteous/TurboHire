@@ -6,19 +6,26 @@ import com.company.turbohire.backend.enums.SlotStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Repository
 public interface InterviewerSlotRepository extends JpaRepository<InterviewerSlot, Long> {
 
-    // Find slots by interviewer and status (available/booked)
-    List<InterviewerSlot> findByInterviewerAndStatus(InterviewerProfile interviewer, SlotStatus status);
 
-    // Find all slots of an interviewer
-    List<InterviewerSlot> findByInterviewer_Id(Long interviewerId);
+    List<InterviewerSlot>
+    findBySlotDateAndStatusAndStartTimeLessThanEqualAndEndTimeGreaterThanEqual(
+            LocalDate slotDate,
+            SlotStatus status,
+            LocalTime startTime,
+            LocalTime endTime
+    );
+
+
 
     // Optional convenience: find by interviewer entity directly
-    default List<InterviewerSlot> findByInterviewer(InterviewerProfile interviewer) {
-        return findByInterviewer_Id(interviewer.getId());
-    }
+    List<InterviewerSlot> findByUserId(Long userId);
+
+    List<InterviewerSlot> findByUserIdAndStatus(Long userId, SlotStatus status);
 }

@@ -18,4 +18,6 @@ public interface CandidateJobRepository extends JpaRepository<CandidateJob, Long
             String currentStage,
             String status
     );
+
+    List<CandidateJob> findByStatus(String status);
 }

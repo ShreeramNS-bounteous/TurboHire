@@ -145,29 +145,7 @@ public class CandidateJobService {
     // ===============================
     // REJECT CANDIDATE
     // ===============================
-    public void reject(Long candidateJobId, Long actorUserId) {
 
-        CandidateJob cj = candidateJobRepository.findById(candidateJobId)
-                .orElseThrow(() -> new RuntimeException("CandidateJob not found"));
-
-        String prevStage = cj.getCurrentStage();
-
-        cj.setCurrentStage("REJECTED");
-        cj.setStatus("REJECTED");
-
-        candidateJobRepository.save(cj);
-
-        candidateLockRepository.releaseLock(cj.getCandidate().getId());
-
-        pipelineStageHistoryRepository.save(
-                PipelineStageHistory.create(
-                        candidateJobId,
-                        prevStage,
-                        "REJECTED",
-                        actorUserId
-                )
-        );
-    }
 
     // ===============================
     // READ APIs

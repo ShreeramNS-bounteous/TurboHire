@@ -19,11 +19,11 @@ public class InterviewerSlot {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;   // maps to slot_id
+    private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "interviewer_id")
-    private InterviewerProfile interviewer;
+    // 🔑 Slot belongs to EMPLOYEE (user), not interviewer profile
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(name = "slot_date", nullable = false)
     private LocalDate slotDate;
@@ -36,7 +36,7 @@ public class InterviewerSlot {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private SlotStatus status;// AVAILABLE / BOOKED / BLOCKED
+    private SlotStatus status; // AVAILABLE / BOOKED / BLOCKED
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -45,7 +45,7 @@ public class InterviewerSlot {
     private void prePersist() {
         this.createdAt = LocalDateTime.now();
         if (this.status == null) {
-            this.status = SlotStatus.AVAILABLE; // ✅ Assign enum, not string
+            this.status = SlotStatus.AVAILABLE;
         }
     }
 }
