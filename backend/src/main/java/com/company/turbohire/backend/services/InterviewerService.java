@@ -2,13 +2,12 @@ package com.company.turbohire.backend.services;
 
 import com.company.turbohire.backend.dto.HR.HrInterviewerAvailabilityDto;
 import com.company.turbohire.backend.dto.HR.HrSlotDto;
-import com.company.turbohire.backend.entity.InterviewerProfile;
-import com.company.turbohire.backend.entity.InterviewerSlot;
-import com.company.turbohire.backend.entity.User;
+import com.company.turbohire.backend.dto.interviewer.InterviewerNavbarDto;
+import com.company.turbohire.backend.dto.interviewer.MyInterviewDto;
+import com.company.turbohire.backend.entity.*;
 import com.company.turbohire.backend.enums.SlotStatus;
-import com.company.turbohire.backend.repository.InterviewerProfileRepository;
-import com.company.turbohire.backend.repository.InterviewerSlotRepository;
-import com.company.turbohire.backend.repository.UserRepository;
+import com.company.turbohire.backend.repository.*;
+import com.company.turbohire.backend.security.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +27,9 @@ public class InterviewerService {
     private final InterviewerProfileRepository profileRepository;
     private final InterviewerSlotRepository slotRepository;
     private final UserRepository userRepository;
+    private final InterviewAssignmentRepository interviewAssignmentRepository;
+    private final InterviewSlotBookingRepository interviewSlotBookingRepository;
+    private final CandidateProfileRepository candidateProfileRepository;
 
     // -------- PROFILE --------
 
@@ -53,10 +55,48 @@ public class InterviewerService {
     }
 
     @Transactional(readOnly = true)
+    public List<MyInterviewDto> getMyInterviews() {
+
+        Long interviewerId = SecurityUtils.getCurrentUserId();
+
+        List<InterviewAssignment> assignments =
+                interviewAssignmentRepository
+                        .findByInterviewer_Id(interviewerId);
+
+        return assignments.stream()
+                .map(InterviewAssignment::getInterview)
+                .map(this::mapToDto)
+                .toList();
+    }
+
+
+    @Transactional(readOnly = true)
     public InterviewerProfile getProfileByUserId(Long userId) {
         return profileRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
     }
+
+    @Transactional(readOnly = true)
+    public InterviewerNavbarDto getNavbarDetails() {
+
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        InterviewerProfile profile = profileRepository
+                .findByUserId(userId)
+                .orElse(null);
+
+        return InterviewerNavbarDto.builder()
+                .userId(userId)
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .expertise(profile != null ? profile.getExpertise() : null)
+                .experienceYears(profile != null ? profile.getExperienceYears() : 0)
+                .build();
+    }
+
 
     // -------- AVAILABILITY --------
 
@@ -162,5 +202,55 @@ public class InterviewerService {
         }).toList();
 
     }
+
+    private MyInterviewDto mapToDto(Interview interview) {
+
+        InterviewSlotBooking booking =
+                interviewSlotBookingRepository.findByInterviewId(interview.getId())
+                        .orElse(null);
+
+        String slotDate = null;
+        String startTime = null;
+        String endTime = null;
+
+        if (booking != null && booking.getSlot() != null) {
+            slotDate = booking.getSlot().getSlotDate().toString();
+            startTime = booking.getSlot().getStartTime().toString();
+            endTime = booking.getSlot().getEndTime().toString();
+        }
+
+        Candidate candidate = interview.getCandidateJob().getCandidate();
+
+        CandidateProfile profile =
+                candidateProfileRepository
+                        .findByCandidateId(candidate.getId())
+                        .orElse(null);
+
+        return MyInterviewDto.builder()
+                .interviewId(interview.getId())
+                .candidateId(candidate.getId())
+                .candidateName(candidate.getFullName())
+                .candidateEmail(candidate.getEmail())
+                .jobTitle(interview.getCandidateJob().getJob().getTitle())
+                .jobId(interview.getCandidateJob().getJob().getId())
+                .roundName(interview.getRound().getRoundName())
+                .slotDate(slotDate)
+                .startTime(startTime)
+                .endTime(endTime)
+                .meetingUrl(interview.getMeetingUrl())
+                .status(interview.getStatus().name())
+                .attendanceStatus(interview.getAttendanceStatus())
+                .feedbackSubmitted(interview.isFeedbackSubmitted())
+
+                // 🔥 PROFILE DATA
+                .education(profile != null ? profile.getEducation() : null)
+                .skills(profile != null ? profile.getSkills() : null)
+                .currentCompany(profile != null ? profile.getCurrentCompany() : null)
+                .totalExperience(profile != null ? profile.getTotalExperience() : null)
+
+                .build();
+    }
+
+
 
 }

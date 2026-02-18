@@ -1,4 +1,4 @@
-package com.company.turbohire.backend.dto.interview;
+package com.company.turbohire.backend.dto.interviewer;
 
 import com.company.turbohire.backend.enums.AttendanceStatus;
 import lombok.Getter;

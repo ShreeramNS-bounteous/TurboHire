@@ -3,11 +3,11 @@ import {
   getMyAvailabilitySlots,
   addAvailabilitySlot,
   deleteAvailabilitySlot,
-} from "../../api/interviewerAvailability.api";
-import { useAuth } from "../../auth/AuthContext"; // adjust path if needed
+} from "../../api/interviewer.api";
+import { useAuth } from "../../auth/AuthContext";
 
 export default function Availability() {
-  const { user } = useAuth(); // 👈 logged-in user
+  const { user } = useAuth();
   const userId = user?.userId;
 
   const [slots, setSlots] = useState([]);
@@ -20,52 +20,72 @@ export default function Availability() {
     endTime: "",
   });
 
+  /* ==============================
+     CHECK IF SLOT IS EXPIRED
+  =============================== */
+  const isSlotExpired = (slot) => {
+    const now = new Date();
+    const slotEnd = new Date(`${slot.slotDate}T${slot.endTime}`);
+    return slotEnd < now;
+  };
+
+  /* ==============================
+     LOAD SLOTS
+  =============================== */
   const loadSlots = async () => {
-    if (!user) return;
-  
+    if (!userId) return;
+
     try {
-      const data = await getMyAvailabilitySlots(user.userId);
+      const data = await getMyAvailabilitySlots(userId);
       setSlots(data || []);
+    } catch (err) {
+      console.error("Failed to load slots");
     } finally {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     loadSlots();
   }, [userId]);
 
+  /* ==============================
+     HANDLE INPUT CHANGE
+  =============================== */
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  /* ==============================
+     ADD SLOT
+  =============================== */
   const handleAddSlot = async (e) => {
     e.preventDefault();
-    console.log("AUTH USER:", user);
 
     if (!userId) {
       alert("User not loaded yet. Please refresh.");
       return;
     }
-  
+
     if (!form.date || !form.startTime || !form.endTime) {
       alert("All fields are required");
       return;
     }
-  
+
     if (form.startTime >= form.endTime) {
       alert("End time must be after start time");
       return;
     }
-  
+
     try {
       setSaving(true);
-      await addAvailabilitySlot(user.userId, {
+
+      await addAvailabilitySlot(userId, {
         slotDate: form.date,
         startTime: form.startTime,
         endTime: form.endTime,
-      });      
+      });
+
       setForm({ date: "", startTime: "", endTime: "" });
       loadSlots();
     } catch (err) {
@@ -74,103 +94,139 @@ export default function Availability() {
       setSaving(false);
     }
   };
-  
-  const handleDelete = async (slotId) => {
+
+  /* ==============================
+     DELETE SLOT
+  =============================== */
+  const handleDelete = async (slotId, booked) => {
+    if (booked) return;
+
     if (!window.confirm("Delete this slot?")) return;
+
     await deleteAvailabilitySlot(slotId, userId);
     loadSlots();
   };
 
-    return (
+  /* ==============================
+     FILTER ACTIVE SLOTS ONLY
+  =============================== */
+  const activeSlots = slots.filter((slot) => !isSlotExpired(slot));
+
+  return (
+    <div className="px-12 py-10 bg-[#F9FAFB] min-h-screen font-['Montserrat']">
       
-    <div className="max-w-3xl">
-      <h1 className="text-2xl font-semibold mb-6">
-        My Availability
-      </h1>
+      {/* HEADER */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-[#101828]">
+          My Availability
+        </h1>
+        <p className="text-gray-500 mt-1 text-sm">
+          Manage your available interview slots
+        </p>
+      </div>
 
-      {/* ADD SLOT */}
-      <form
-        onSubmit={handleAddSlot}
-        className="bg-white p-6 rounded shadow mb-8 space-y-4"
-      >
-        <div className="grid grid-cols-3 gap-4">
-          <input
-            type="date"
-            name="date"
-            value={form.date}
-            onChange={handleChange}
-            className="border p-2 rounded"
-          />
-          <input
-            type="time"
-            name="startTime"
-            value={form.startTime}
-            onChange={handleChange}
-            className="border p-2 rounded"
-          />
-          <input
-            type="time"
-            name="endTime"
-            value={form.endTime}
-            onChange={handleChange}
-            className="border p-2 rounded"
-          />
-        </div>
+      {/* ADD SLOT CARD */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-10">
+        <h2 className="text-lg font-bold text-[#101828] mb-6">
+          Add New Slot
+        </h2>
 
-        <button
-  type="submit"
-  disabled={saving || !userId}
-  className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
->
-  {saving ? "Saving..." : "Add Slot"}
-</button>
-      </form>
+        <form onSubmit={handleAddSlot} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <input
+              type="date"
+              name="date"
+              value={form.date}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+
+            <input
+              type="time"
+              name="startTime"
+              value={form.startTime}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+
+            <input
+              type="time"
+              name="endTime"
+              value={form.endTime}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={saving || !userId}
+            className="bg-[#101828] hover:bg-black text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Add Slot"}
+          </button>
+        </form>
+      </div>
 
       {/* SLOT LIST */}
-      <div className="bg-white rounded shadow">
-        <table className="w-full">
-          <thead className="border-b">
-            <tr>
-              <th className="text-left p-4">Date</th>
-              <th className="text-left p-4">Start</th>
-              <th className="text-left p-4">End</th>
-              <th className="text-right p-4">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
-              <tr>
-                <td colSpan="4" className="p-4 text-center text-gray-500">
-                  Loading slots...
-                </td>
-              </tr>
-            )}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <h2 className="text-lg font-bold text-[#101828] mb-6">
+          Your Slots
+        </h2>
 
-            {!loading && slots.length === 0 && (
-              <tr>
-                <td colSpan="4" className="p-4 text-center text-gray-500">
-                  No availability added
-                </td>
-              </tr>
-            )}
+        {loading && (
+          <div className="text-center text-gray-500 py-10">
+            Loading slots...
+          </div>
+        )}
 
-            {slots.map((slot) => (
-              <tr key={slot.id} className="border-b">
-                <td className="p-4">{slot.slotDate}</td>
-                <td className="p-4">{slot.startTime}</td>
-                <td className="p-4">{slot.endTime}</td>
-                <td className="p-4 text-right">
-                  <button
-                    onClick={() => handleDelete(slot.id)}
-                    className="text-red-600 font-medium"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {!loading && activeSlots.length === 0 && (
+          <div className="text-center text-gray-400 py-10">
+            No active availability slots.
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {activeSlots.map((slot) => (
+            <div
+              key={slot.id}
+              className={`flex justify-between items-center p-5 border border-gray-100 rounded-xl transition-all ${
+                slot.booked
+                  ? "bg-gray-50"
+                  : "hover:shadow-md"
+              }`}
+            >
+              <div>
+                <p className="font-semibold text-[#101828]">
+                  {slot.slotDate}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {slot.startTime} → {slot.endTime}
+                </p>
+
+                {slot.booked && (
+                  <span className="text-xs text-blue-500 font-semibold mt-1 inline-block">
+                    Booked
+                  </span>
+                )}
+              </div>
+
+              <button
+                disabled={slot.booked}
+                onClick={() =>
+                  handleDelete(slot.id, slot.booked)
+                }
+                className={`font-semibold text-sm transition ${
+                  slot.booked
+                    ? "text-gray-300 cursor-not-allowed"
+                    : "text-red-500 hover:text-red-600"
+                }`}
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

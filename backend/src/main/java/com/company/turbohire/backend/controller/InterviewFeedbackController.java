@@ -44,7 +44,7 @@ public class InterviewFeedbackController {
      * Get previous round feedback for an interview
      */
     @PreAuthorize("hasAnyRole('RECRUITER','USER')")
-    @GetMapping("/interview/{id}/previous")
+    @GetMapping("/{id}/previous")
     public ResponseEntity<List<InterviewFeedbackResponseDto>> getPreviousRoundFeedback(
             @PathVariable("id") Long interviewId
     ) {
@@ -106,10 +106,13 @@ public class InterviewFeedbackController {
                 .id(feedback.getId())
                 .interviewId(feedback.getInterview().getId())
                 .interviewerId(feedback.getInterviewer().getId())
+                .interviewerName(feedback.getInterviewer().getFullName())
+                .roundName(feedback.getInterview().getRound().getRoundName()) // ✅ ADD THIS
                 .rating(feedback.getRating())
                 .recommendation(feedback.getRecommendation())
                 .comments(feedback.getComments())
                 .submittedAt(feedback.getSubmittedAt())
                 .build();
     }
+
 }

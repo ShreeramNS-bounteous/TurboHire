@@ -22,6 +22,10 @@ public interface InterviewAssignmentRepository
 
     Optional<InterviewAssignment> findByInterviewId(Long interviewId);
 
+    List<InterviewAssignment> findByInterviewer_Id(Long interviewerId);
+
+    void deleteByInterview_Id(Long interviewId);
+
 
 
 }

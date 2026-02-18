@@ -44,7 +44,7 @@ export default function JobCard({
           </div>
 
           <p className="text-sm text-gray-500 mt-1">
-            JOB-{String(job.id).padStart(4, "0")}
+            BXA-{String(job.id).padStart(4, "0")}
           </p>
 
           <p className="text-sm text-gray-600 mt-2">
@@ -54,7 +54,6 @@ export default function JobCard({
 
         {/* ACTIONS */}
         <JobActionsMenu
-          onClick={(e) => e.stopPropagation()}
           jobId={job.id}
           jobStatus={job.status}
           onJobDeleted={onJobDeleted}

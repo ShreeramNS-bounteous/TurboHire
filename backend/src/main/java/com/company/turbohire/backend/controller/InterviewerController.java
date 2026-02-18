@@ -83,6 +83,25 @@ public class InterviewerController {
         );
     }
 
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/my-interviews")
+    public ResponseEntity<List<MyInterviewDto>> getMyInterviews() {
+        return ResponseEntity.ok(
+                interviewerService.getMyInterviews()
+        );
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/me")
+    public ResponseEntity<InterviewerNavbarDto> getMyNavbarDetails() {
+
+        return ResponseEntity.ok(
+                interviewerService.getNavbarDetails()
+        );
+    }
+
+
+
     @PreAuthorize("hasRole('RECRUITER')")
     @GetMapping("/availability")
     public ResponseEntity<List<HrInterviewerAvailabilityDto>> getInterviewerAvailability(
