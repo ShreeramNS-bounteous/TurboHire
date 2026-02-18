@@ -60,7 +60,7 @@ export default function JobActionsMenu({
 
   return (
     <>
-      <div className="relative" ref={ref}>
+      <div className="relative" ref={ref} onClick={(e)=>e.stopPropagation()}>
         <button
           onClick={() => setOpen(!open)}
           className="border px-4 py-2 rounded text-sm"

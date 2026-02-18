@@ -25,7 +25,7 @@ public interface JobRoundRepository extends JpaRepository<JobRound, Long> {
             Integer roundOrder
     );
 
-
+    Optional<JobRound> findByJob_IdAndRoundName(Long jobId,String current_stage);
 
 }
 

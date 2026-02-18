@@ -15,26 +15,26 @@ import JobsDashboard from "./pages/recruiter/jobs/JobsDashboard";
 import InterviewerDashboard from "./pages/Interviewer/InterviewerDashboard";
 import InterviewDashboard from "./pages/recruiter/Interview/InterviewDashboard";
 import LandingPage from "./pages/LandingPage";
+import InterviewDetailPage from "./pages/Interviewer/InterviewerDetailPage";
 
 function App() {
   return (
-    
     <BrowserRouter>
-       <Toaster
-    position="top-right"
-    reverseOrder={false}
-    toastOptions={{
-      duration: 3000,
-      style: {
-        borderRadius: "10px",
-        background: "#fff",
-        color: "#1e293b",
-      },
-    }}
-  />
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            borderRadius: "10px",
+            background: "#fff",
+            color: "#1e293b",
+          },
+        }}
+      />
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route index element={<LandingPage/>} />
+        <Route index element={<LandingPage />} />
         <Route
           path="/recruiter"
           element={
@@ -63,6 +63,15 @@ function App() {
           element={
             <ProtectedRoute roles={["USER"]}>
               <InterviewerDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/interviewer/interview/:id"
+          element={
+            <ProtectedRoute roles={["USER"]}>
+              <InterviewDetailPage/>
             </ProtectedRoute>
           }
         />

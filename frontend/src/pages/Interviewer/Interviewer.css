@@ -1,0 +1,89 @@
+/* ===== Wrapper aligned with Navbar ===== */
+
+.interviewer-tabs-wrapper {
+    padding: 24px 32px 0 32px; /* aligns with navbar padding */
+    background: white;
+  }
+  
+  /* ===== Tabs Container ===== */
+  
+  .interviewer-tabs {
+    position: relative;
+    display: inline-flex;
+    background: #f1f5f9;
+    padding: 6px;
+    border-radius: 14px;
+    gap: 6px;
+  }
+  
+  /* ===== Individual Tab ===== */
+  
+  .interviewer-tab {
+    position: relative;
+    background: transparent;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 12px;
+    color: #64748b;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .interviewer-tab.active {
+    color: #2563eb;
+  }
+  
+  /* ===== Animated Active Slider ===== */
+  
+  .tab-slider {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    background: white;
+    border-radius: 12px;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    z-index: 1;
+  }
+  
+  /* ===== Badge ===== */
+  
+  .tab-badge {
+    background: #e2e8f0;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  /* ===== Tab Content Animation ===== */
+
+.tab-content-wrapper {
+    position: relative;
+    padding: 24px 32px;
+    min-height: 300px;
+    overflow: hidden;
+  }
+  
+  .tab-content {
+    animation: slideFadeIn 0.35s ease;
+  }
+  
+  @keyframes slideFadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0px);
+    }
+  }
+  

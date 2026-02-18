@@ -41,6 +41,7 @@
         @Column(name = "submitted_at", nullable = false, updatable = false)
         private LocalDateTime submittedAt;
 
+
         @PrePersist
         private void prePersist() {
             this.submittedAt = LocalDateTime.now();

@@ -45,15 +45,30 @@ public class InterviewService {
 
         Job job = candidateJob.getJob();
 
-        // 🔥 Automatically pick FIRST round
-        JobRound firstRound = jobRoundRepository
-                .findFirstByJob_IdOrderByRoundOrderAsc(job.getId())
-                .orElseThrow(() -> new RuntimeException("No rounds defined for this job"));
+        String currentStage = candidateJob.getCurrentStage();
+
+        JobRound round;
+
+        // 🔹 Case 1: First time (SHORTLISTED → Round 1)
+        if ("SHORTLISTED".equalsIgnoreCase(currentStage)) {
+
+            round = jobRoundRepository
+                    .findFirstByJob_IdOrderByRoundOrderAsc(job.getId())
+                    .orElseThrow(() -> new RuntimeException("No rounds defined"));
+
+        } else {
+
+            // 🔹 Case 2: Already moved to next round
+            round = jobRoundRepository
+                    .findByJob_IdAndRoundName(job.getId(), currentStage)
+                    .orElseThrow(() ->
+                            new RuntimeException("Stage does not match any round"));
+        }
 
         Interview interview = Interview.builder()
                 .candidateJob(candidateJob)
-                .round(firstRound)
-                .status(InterviewStatus.CREATED)  // 🔥 This means "To Be Scheduled"
+                .round(round)
+                .status(InterviewStatus.CREATED)
                 .mode(InterviewMode.ONLINE)
                 .build();
 
@@ -588,4 +603,32 @@ public class InterviewService {
         interview.setStatus(InterviewStatus.CANCELLED);
         interviewRepository.save(interview);
     }
+
+    @Transactional
+    public void forceDeleteInterview(Long interviewId) {
+
+        Interview interview = interviewRepository.findById(interviewId)
+                .orElseThrow(() -> new RuntimeException("Interview not found"));
+
+        // 1️⃣ Free Slot (if exists)
+        interviewSlotBookingRepository.findByInterviewId(interviewId)
+                .ifPresent(booking -> {
+                    InterviewerSlot slot = booking.getSlot();
+                    slot.setStatus(SlotStatus.AVAILABLE);
+                    interviewerSlotRepository.save(slot);
+
+                    interviewSlotBookingRepository.delete(booking);
+                });
+
+        // 2️⃣ Delete Interview Assignments
+        interviewAssignmentRepository.deleteByInterview_Id(interviewId);
+
+        // 3️⃣ Delete Feedback (if exists)
+        feedbackRepository.findByInterview_Id(interviewId)
+                .ifPresent(feedbackRepository::delete);
+
+        // 4️⃣ Finally delete Interview
+        interviewRepository.delete(interview);
+    }
+
 }

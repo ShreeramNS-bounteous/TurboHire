@@ -9,7 +9,7 @@ import CompletedInterviewList from "./CompletedInterviewList";
 import { useParams } from "react-router-dom";
 
 
-import { fetchAvailableInterviewers } from "../../../api/interviewerAvailability.api";
+import { fetchAvailableInterviewers } from "../../../api/interviewer.api";
 import {
   bookInterviewSlot,
   fetchPendingInterviews,

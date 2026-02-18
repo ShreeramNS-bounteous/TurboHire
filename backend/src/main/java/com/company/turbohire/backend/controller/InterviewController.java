@@ -1,6 +1,7 @@
 package com.company.turbohire.backend.controller;
 
 import com.company.turbohire.backend.dto.interview.*;
+import com.company.turbohire.backend.dto.interviewer.MarkAttendanceRequestDto;
 import com.company.turbohire.backend.entity.Interview;
 import com.company.turbohire.backend.security.util.SecurityUtils;
 import com.company.turbohire.backend.services.InterviewService;
@@ -148,6 +149,18 @@ public class InterviewController {
         return ResponseEntity.ok(
                 interviewService.getPendingInterviews(jobId)
         );
+    }
+
+    @DeleteMapping("/{id}/force-delete")
+    @PreAuthorize("hasRole('RECRUITER')")
+    public ResponseEntity<Void> forceDeleteInterview(
+            @PathVariable Long id
+    ) {
+        Long actorUserId = SecurityUtils.getCurrentUserId();
+
+        interviewService.forceDeleteInterview(id);
+
+        return ResponseEntity.ok().build();
     }
 
 

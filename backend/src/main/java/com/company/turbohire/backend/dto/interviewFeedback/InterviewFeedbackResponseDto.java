@@ -17,6 +17,7 @@ public class InterviewFeedbackResponseDto {
     private Long interviewId;
     private Long interviewerId;
     private String interviewerName;
+    private String roundName;
     private Integer rating;
     private String recommendation;
     private String comments;
