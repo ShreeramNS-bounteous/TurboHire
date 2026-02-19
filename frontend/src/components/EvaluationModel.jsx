@@ -3,46 +3,12 @@ import {
   X,
   Star,
   Save,
-<<<<<<< HEAD
-  CheckCircle,
-  XCircle,
-  Clock,
-  ArrowRightCircle,
-  Download,
-=======
   Download,
   Edit,
->>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
 } from "lucide-react";
 import * as XLSX from "xlsx";
 
 /* ==============================
-<<<<<<< HEAD
-   STABLE COMMENT INPUT
-================================ */
-const StableCommentArea = ({
-  value,
-  onChange,
-  placeholder,
-  autoFocus,
-}) => {
-  const textareaRef = useRef(null);
-
-  useEffect(() => {
-    if (autoFocus && textareaRef.current) {
-      const length = textareaRef.current.value.length;
-      textareaRef.current.focus();
-      textareaRef.current.setSelectionRange(length, length);
-    }
-  }, [value, autoFocus]);
-
-  return (
-    <textarea
-      ref={textareaRef}
-      className="w-full h-20 p-3 text-xs border border-gray-200 rounded-lg focus:border-[#007bff] outline-none resize-none transition-all"
-      placeholder={placeholder}
-      value={value}
-=======
    TEXTAREA COMPONENT
 ================================ */
 const StableCommentArea = ({ value, onChange, placeholder, disabled }) => {
@@ -57,126 +23,12 @@ const StableCommentArea = ({ value, onChange, placeholder, disabled }) => {
       placeholder={placeholder}
       value={value}
       disabled={disabled}
->>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
       onChange={(e) => onChange(e.target.value)}
     />
   );
 };
 
 /* ==============================
-<<<<<<< HEAD
-   MAIN COMPONENT
-================================ */
-
-const EvaluationModal = ({
-  isOpen,
-  onClose,
-  candidate,
-  onSave, // 🔥 interviewer API handler
-}) => {
-  const [recommendation, setRecommendation] = useState("");
-  const [activeField, setActiveField] = useState(null);
-
-  const [scores, setScores] = useState({
-    coreConcepts: { rating: 0, comment: "" },
-    coding: { rating: 0, comment: "" },
-    communication: { rating: 0, comment: "" },
-    behavioral: { rating: 0, comment: "" },
-  });
-
-  /* ==============================
-     RESET WHEN OPEN
-  ================================= */
-  useEffect(() => {
-    if (isOpen) {
-      setRecommendation("");
-      setScores({
-        coreConcepts: { rating: 0, comment: "" },
-        coding: { rating: 0, comment: "" },
-        communication: { rating: 0, comment: "" },
-        behavioral: { rating: 0, comment: "" },
-      });
-    }
-  }, [isOpen]);
-
-  /* ==============================
-     CALCULATE AVERAGE
-  ================================= */
-  const calculateAverage = () => {
-    let total = 0;
-    let count = 0;
-
-    Object.values(scores).forEach((item) => {
-      if (item.rating > 0) {
-        total += item.rating;
-        count++;
-      }
-    });
-
-    if (count === 0) return 0;
-    return total / count;
-  };
-
-  /* ==============================
-     EXCEL DOWNLOAD
-  ================================= */
-  const downloadExcel = () => {
-    const data = [
-      {
-        Candidate: candidate.fullName,
-        InterviewId: candidate.interviewId,
-        CoreConcepts: scores.coreConcepts.rating,
-        Coding: scores.coding.rating,
-        Communication: scores.communication.rating,
-        Behavioral: scores.behavioral.rating,
-        Recommendation: recommendation,
-      },
-    ];
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Evaluation");
-
-    XLSX.writeFile(
-      workbook,
-      `${candidate.fullName}_evaluation.xlsx`
-    );
-  };
-
-  /* ==============================
-     SAVE HANDLER (UPDATED FOR YOUR BACKEND)
-  ================================= */
-  const handleSaveClick = () => {
-    const techAvg = parseFloat(calculateAverage('technical'));
-    const softAvg = parseFloat(calculateAverage('soft'));
-    const finalScoreValue = (techAvg + softAvg) / 2;
-  
-    const normalizedRating =
-      finalScoreValue > 0
-        ? Math.round(finalScoreValue / 2)
-        : 0;
-  
-    const payload = {
-      interviewId: candidate.interviewId,
-      rating: normalizedRating,
-      recommendation: recommendation.toUpperCase(),
-      comments: JSON.stringify(scores),
-    };
-  
-    onSave(payload);
-  };
-  
-
-  /* ==============================
-     STAR RENDERER
-  ================================= */
-  const MetricRow = ({ title, fieldKey }) => (
-    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3">
-      <div className="flex justify-between items-center">
-        <h4 className="text-sm font-bold text-[#101828]">
-          {title}
-        </h4>
-=======
    🔥 FIXED METRIC ROW (MOVED OUTSIDE)
 ================================ */
 const MetricRow = ({
@@ -190,16 +42,12 @@ const MetricRow = ({
     <div className="p-4 bg-gray-50 rounded-xl border space-y-3">
       <div className="flex justify-between items-center">
         <h4 className="text-sm font-bold">{title}</h4>
->>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
-<<<<<<< HEAD
-=======
               type="button"
               disabled={isViewMode}
->>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
               onClick={() =>
                 setScores((prev) => ({
                   ...prev,
@@ -231,31 +79,14 @@ const MetricRow = ({
       <StableCommentArea
         placeholder="Enter feedback..."
         value={scores[fieldKey].comment}
-<<<<<<< HEAD
-        autoFocus={activeField === fieldKey}
-        onChange={(val) => {
-          setActiveField(fieldKey);
-=======
         disabled={isViewMode}
         onChange={(val) =>
->>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
           setScores((prev) => ({
             ...prev,
             [fieldKey]: {
               ...prev[fieldKey],
               comment: val,
             },
-<<<<<<< HEAD
-          }));
-        }}
-      />
-    </div>
-  );
-
-  /* ==============================
-     UI
-  ================================= */
-=======
           }))
         }
       />
@@ -430,7 +261,6 @@ const EvaluationModel = ({ isOpen, onClose, candidate, onSave }) => {
 
   const isViewMode = isSubmitted && !isEditMode;
 
->>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
   return (
     <div
       className={`fixed inset-y-0 right-0 w-[550px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 flex flex-col ${
@@ -441,19 +271,12 @@ const EvaluationModel = ({ isOpen, onClose, candidate, onSave }) => {
       <div className="p-6 border-b bg-[#101828] text-white flex justify-between items-center">
         <div>
           <h2 className="text-lg font-bold">
-<<<<<<< HEAD
-            {candidate?.fullName}
-          </h2>
-          <span className="text-xs text-gray-400">
-            Submit Interview Evaluation
-=======
             {candidate?.candidateName}
           </h2>
           <span className="text-xs text-gray-300">
             {isSubmitted
               ? "View / Edit Evaluation"
               : "Submit Interview Evaluation"}
->>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
           </span>
         </div>
 
@@ -470,13 +293,6 @@ const EvaluationModel = ({ isOpen, onClose, candidate, onSave }) => {
         <MetricRow
           title="Core Concepts"
           fieldKey="coreConcepts"
-<<<<<<< HEAD
-        />
-        <MetricRow title="Coding Skills" fieldKey="coding" />
-        <MetricRow
-          title="Communication"
-          fieldKey="communication"
-=======
           scores={scores}
           setScores={setScores}
           isViewMode={isViewMode}
@@ -494,58 +310,10 @@ const EvaluationModel = ({ isOpen, onClose, candidate, onSave }) => {
           scores={scores}
           setScores={setScores}
           isViewMode={isViewMode}
->>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
         />
         <MetricRow
           title="Behavioral"
           fieldKey="behavioral"
-<<<<<<< HEAD
-        />
-
-        {/* Recommendation */}
-        <div className="p-5 border rounded-2xl bg-white shadow-sm">
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
-            Select Recommendation
-          </h4>
-
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              {
-                key: "next_round",
-                label: "NEXT ROUND",
-                icon: <ArrowRightCircle size={16} />,
-              },
-              {
-                key: "on_hold",
-                label: "ON HOLD",
-                icon: <Clock size={16} />,
-              },
-              {
-                key: "hire",
-                label: "HIRE",
-                icon: <CheckCircle size={16} />,
-              },
-              {
-                key: "reject",
-                label: "REJECT",
-                icon: <XCircle size={16} />,
-              },
-            ].map((item) => (
-              <button
-                key={item.key}
-                onClick={() =>
-                  setRecommendation(item.key)
-                }
-                className={`p-3 rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 border-2 transition-all ${
-                  recommendation === item.key
-                    ? "border-blue-500 bg-blue-50 text-blue-700"
-                    : "border-gray-50 text-gray-400"
-                }`}
-              >
-                {item.icon} {item.label}
-              </button>
-            ))}
-=======
           scores={scores}
           setScores={setScores}
           isViewMode={isViewMode}
@@ -623,7 +391,6 @@ const EvaluationModel = ({ isOpen, onClose, candidate, onSave }) => {
                 </button>
               );
             })}
->>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
           </div>
         </div>
       </div>
@@ -637,14 +404,6 @@ const EvaluationModel = ({ isOpen, onClose, candidate, onSave }) => {
           <Download size={16} /> Export Excel
         </button>
 
-<<<<<<< HEAD
-        <button
-          onClick={handleSaveClick}
-          className="flex-1 py-3 rounded-2xl font-bold bg-[#101828] text-white flex items-center justify-center gap-2 hover:bg-black"
-        >
-          <Save size={18} /> Save Evaluation
-        </button>
-=======
         {isSubmitted && !isEditMode && (
           <button
             onClick={() => setIsEditMode(true)}
@@ -665,14 +424,9 @@ const EvaluationModel = ({ isOpen, onClose, candidate, onSave }) => {
               : "Save Evaluation"}
           </button>
         )}
->>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
       </div>
     </div>
   );
 };
 
-<<<<<<< HEAD
-export default EvaluationModal;
-=======
 export default EvaluationModel;
->>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
