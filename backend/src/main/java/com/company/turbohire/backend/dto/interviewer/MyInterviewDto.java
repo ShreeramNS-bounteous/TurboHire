@@ -3,6 +3,8 @@ package com.company.turbohire.backend.dto.interviewer;
 import com.company.turbohire.backend.enums.AttendanceStatus;
 import lombok.*;
 
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -21,14 +23,25 @@ public class MyInterviewDto {
     private Long jobId;
     private String roundName;
 
+    private String evaluationTemplateCode;
+    private boolean hasNextRound;
+
+
     private String slotDate;
     private String startTime;
     private String endTime;
 
     private String meetingUrl;
     private String status;
+
     private AttendanceStatus attendanceStatus;
     private boolean feedbackSubmitted;
+
+
+    private Integer rating;
+    private String recommendation;
+    private String comments;
+    private LocalDateTime submittedAt;
 
     // 🔥 Proper Types (No String)
     private Map<String, Object> education;

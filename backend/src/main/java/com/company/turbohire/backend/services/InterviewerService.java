@@ -30,6 +30,11 @@ public class InterviewerService {
     private final InterviewAssignmentRepository interviewAssignmentRepository;
     private final InterviewSlotBookingRepository interviewSlotBookingRepository;
     private final CandidateProfileRepository candidateProfileRepository;
+<<<<<<< HEAD
+=======
+    private final InterviewFeedbackRepository feedbackRepository;
+    private final JobRoundRepository jobRoundRepository;
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
 
     // -------- PROFILE --------
 
@@ -226,6 +231,31 @@ public class InterviewerService {
                         .findByCandidateId(candidate.getId())
                         .orElse(null);
 
+<<<<<<< HEAD
+=======
+        InterviewFeedback feedback = null;
+
+        if (interview.isFeedbackSubmitted()) {
+            feedback = feedbackRepository
+                    .findByInterview_Id(interview.getId())
+                    .orElse(null);
+        }
+
+        JobRound currentRound = interview.getRound();
+        String templateCode = currentRound.getEvaluationTemplateCode();
+
+
+        int nextOrder = currentRound.getRoundOrder() + 1;
+
+        boolean hasNextRound =
+                jobRoundRepository.findByJob_IdAndRoundOrder(
+                        currentRound.getJob().getId(),
+                        nextOrder
+                ).isPresent();
+
+
+
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
         return MyInterviewDto.builder()
                 .interviewId(interview.getId())
                 .candidateId(candidate.getId())
@@ -234,6 +264,11 @@ public class InterviewerService {
                 .jobTitle(interview.getCandidateJob().getJob().getTitle())
                 .jobId(interview.getCandidateJob().getJob().getId())
                 .roundName(interview.getRound().getRoundName())
+<<<<<<< HEAD
+=======
+                .evaluationTemplateCode(templateCode)
+                .hasNextRound(hasNextRound)
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
                 .slotDate(slotDate)
                 .startTime(startTime)
                 .endTime(endTime)
@@ -242,6 +277,15 @@ public class InterviewerService {
                 .attendanceStatus(interview.getAttendanceStatus())
                 .feedbackSubmitted(interview.isFeedbackSubmitted())
 
+<<<<<<< HEAD
+=======
+                // 🔥 CURRENT ROUND FEEDBACK
+                .rating(feedback != null ? feedback.getRating() : null)
+                .recommendation(feedback != null ? feedback.getRecommendation() : null)
+                .comments(feedback != null ? feedback.getComments() : null)
+                .submittedAt(feedback != null ? feedback.getSubmittedAt() : null)
+
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
                 // 🔥 PROFILE DATA
                 .education(profile != null ? profile.getEducation() : null)
                 .skills(profile != null ? profile.getSkills() : null)

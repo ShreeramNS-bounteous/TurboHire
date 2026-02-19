@@ -34,7 +34,11 @@ export const submitInterviewFeedback = async (
   payload
 ) => {
   const res = await api.post(
+<<<<<<< HEAD
     `/api/interviews/${interviewId}/feedback`,
+=======
+    `/api/interviews/feedback/${interviewId}/submit`,
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
     payload
   );
   return res.data;

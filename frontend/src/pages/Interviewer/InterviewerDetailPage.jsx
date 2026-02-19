@@ -39,14 +39,12 @@ export default function InterviewDetailPage() {
     loadProfile();
   }, []);
 
-  /* ================= LOAD INTERVIEW FROM DB ================= */
+  /* ================= LOAD INTERVIEW ================= */
   const loadInterview = async () => {
     try {
-      const all = await getMyInterviews();
+      const all = await getMyInterviews(); // ✅ FIXED
 
-      const found = all.find(
-        (i) => String(i.interviewId) === String(id)
-      );
+      const found = all.find((i) => String(i.interviewId) === String(id));
 
       if (!found) {
         toast.error("Interview not found");
@@ -64,38 +62,36 @@ export default function InterviewDetailPage() {
   }, [id]);
 
   /* ================= LOAD PREVIOUS FEEDBACK ================= */
-  useEffect(() => {
-    async function loadFeedback() {
-      try {
-        const data = await getPreviousRoundFeedback(id);
-        setPreviousFeedback(data || []);
-      } catch {
-        console.error("Failed loading previous feedback");
-      }
+  const loadFeedback = async () => {
+    // ✅ MOVED OUTSIDE
+    try {
+      const data = await getPreviousRoundFeedback(id);
+      setPreviousFeedback(data || []);
+    } catch {
+      console.error("Failed loading previous feedback");
     }
+  };
 
+  useEffect(() => {
     if (id) loadFeedback();
   }, [id]);
 
-  /* ================= DYNAMIC TIMER ================= */
+  /* ================= TIMER ================= */
   useEffect(() => {
     if (!interview) return;
-  
+
     const interval = setInterval(() => {
       const startTime = new Date(
         `${interview.slotDate}T${interview.startTime}`
       );
-  
+
       const now = new Date();
       const diff = startTime - now;
-  
-      /* ================= PRIORITY LOGIC ================= */
-  
+
       if (interview.attendanceStatus === "NO_SHOW") {
         setTimeLabel("No Show");
         return;
       }
-  
       if (
         interview.attendanceStatus === "ATTENDED" &&
         !interview.feedbackSubmitted
@@ -103,16 +99,16 @@ export default function InterviewDetailPage() {
         setTimeLabel("Pending Decision");
         return;
       }
-  
-      if (interview.feedbackSubmitted) {
+
+      if (interview.feedbackSubmitted ) {
         setTimeLabel("Completed");
         return;
       }
-  
+
       if (diff > 0) {
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff / (1000 * 60)) % 60);
-  
+
         if (hours > 0) {
           setTimeLabel(`Starts in ${hours}h ${minutes}m`);
         } else {
@@ -122,20 +118,17 @@ export default function InterviewDetailPage() {
         setTimeLabel("Interview in progress");
       }
     }, 500);
-  
+
     return () => clearInterval(interval);
   }, [interview]);
-  
 
   /* ================= ATTENDANCE ================= */
   const handleAttendanceSubmit = async (status) => {
     try {
       await markInterviewAttendance(interview.interviewId, status);
-
       toast.success("Attendance marked");
       setShowAttendanceModal(false);
-
-      await loadInterview(); // 🔥 reload from DB
+      await loadInterview();
     } catch {
       toast.error("Failed to mark attendance");
     }
@@ -145,11 +138,11 @@ export default function InterviewDetailPage() {
   const handleSaveFeedback = async (payload) => {
     try {
       await submitInterviewFeedback(id, payload);
-
       toast.success("Feedback submitted");
       setIsEvaluationOpen(false);
 
-      await loadInterview(); // 🔥 reload from DB
+      await loadInterview(); // refresh interview
+      await loadFeedback(); // refresh previous feedback
     } catch {
       toast.error("Feedback submission failed");
     }
@@ -162,49 +155,43 @@ export default function InterviewDetailPage() {
   );
 
   const canMarkAttendance =
-    new Date() >= interviewStart &&
-    !interview.attendanceStatus;
+    new Date() >= interviewStart && !interview.attendanceStatus;
 
   const canEvaluate =
-    interview.attendanceStatus === "ATTENDED" &&
-    !interview.feedbackSubmitted;
+    interview.attendanceStatus === "ATTENDED" && !interview.feedbackSubmitted;
 
   return (
     <>
       <Navbar interviewer={interviewer} />
 
       <div className="px-12 py-10 bg-[#F9FAFB] min-h-screen">
-
         {/* ================= HEADER ================= */}
         <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-8 mb-8">
           <div className="grid grid-cols-3 items-center">
-
-            {/* LEFT */}
             <div>
               <h1 className="text-2xl font-bold text-[#101828]">
                 {interview.jobTitle}
               </h1>
 
               <p className="text-sm text-gray-500 mt-2">
-                BXA-{String(interview.jobId).padStart(4, "0")} • {interview.roundName}
+                BXA-{String(interview.jobId).padStart(4, "0")} •{" "}
+                {interview.roundName}
               </p>
 
               <p className="text-xs text-gray-400 mt-2">
-                {interview.slotDate} | {interview.startTime} – {interview.endTime}
+                {interview.slotDate} | {interview.startTime} –{" "}
+                {interview.endTime}
               </p>
             </div>
 
-            {/* CENTER TIMER */}
             <div className="flex justify-center">
               <span className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-semibold">
                 {timeLabel}
               </span>
             </div>
 
-            {/* RIGHT */}
             <div className="flex flex-col items-end gap-3">
-
-              {interview.status === "SCHEDULED" && canMarkAttendance && (
+              {interview.status === "SCHEDULED" && (
                 <a
                   href={interview.meetingUrl}
                   target="_blank"
@@ -242,55 +229,52 @@ export default function InterviewDetailPage() {
         {/* ================= CANDIDATE CARD ================= */}
         <CandidateCard
           candidate={interview}
-          previousFeedback={previousFeedback}
+          feedbackToShow={
+            interview.feedbackSubmitted
+              ? [
+                  {
+                    rating: interview.rating,
+                    recommendation: interview.recommendation,
+                    comments: interview.comments,
+                    submittedAt: interview.submittedAt,
+                    roundName: interview.roundName,
+                  },
+                ]
+              : previousFeedback
+          }
         />
 
         {/* ================= EVALUATE SECTION ================= */}
         <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-8 my-8 flex justify-between items-center">
           <h3 className="text-lg font-bold text-[#101828]">
-            Evaluate Candidate after the Interview
+            {interview.feedbackSubmitted
+              ? "Your Evaluation"
+              : "Evaluate Candidate after the Interview"}
           </h3>
 
           <button
-            disabled={!canEvaluate}
             onClick={() => setIsEvaluationOpen(true)}
-            className={`px-6 py-2 rounded-xl font-semibold text-sm transition ${
-              canEvaluate
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
+            className="px-6 py-2 rounded-xl font-semibold text-sm bg-blue-600 hover:bg-blue-700 text-white transition"
           >
-            Evaluate
+            {interview.feedbackSubmitted ? "View / Edit" : "Evaluate"}
           </button>
         </div>
 
         {/* ================= BOTTOM INFO GRID ================= */}
         <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-8 mt-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-
-            <InfoCard
-              title="Education"
-              value={interview.education?.degree}
-            />
-
+            <InfoCard title="Education" value={interview.education?.degree} />
             <InfoCard
               title="Experience"
               value={`${interview.totalExperience || 0} Years`}
             />
-
             <InfoCard
               title="Skills"
               value={interview.skills?.join(", ") || "N/A"}
             />
-
-            <InfoCard
-              title="Current Stage"
-              value={interview.roundName}
-            />
-
+            <InfoCard title="Current Stage" value={interview.roundName} />
           </div>
         </div>
-
       </div>
 
       {/* ================= ATTENDANCE MODAL ================= */}
@@ -334,10 +318,7 @@ export default function InterviewDetailPage() {
 function InfoCard({ title, value }) {
   return (
     <div className="bg-[#F9F6F2] rounded-2xl p-6 hover:shadow-md transition">
-      <p className="text-xs font-bold text-gray-400 uppercase mb-2">
-        {title}
-      </p>
-
+      <p className="text-xs font-bold text-gray-400 uppercase mb-2">{title}</p>
       <p className="text-sm font-semibold text-[#101828]">
         {value || "Not Specified"}
       </p>

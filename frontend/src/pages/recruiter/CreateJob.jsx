@@ -59,10 +59,11 @@ export default function CreateJob() {
         rounds
           .filter((r) => r.roundName.trim())
           .map((r, index) =>
-            api.post(`/api/jobs/${jobId}/rounds`, {
-              roundName: r.roundName,
-              roundOrder: index + 1,
-            })
+          api.post(`/api/jobs/${jobId}/rounds`, {
+            roundName: r.roundName,
+            roundOrder: index + 1,
+            evaluationTemplateCode: r.evaluationTemplateCode,
+          })
           )
       );
 

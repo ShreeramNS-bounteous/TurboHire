@@ -26,5 +26,12 @@ public class JobRound {
     @Column(name="round_order",nullable = false)
     private Integer roundOrder;
 
+<<<<<<< HEAD
+=======
+    @Column(name = "evaluation_template_code")
+    private String evaluationTemplateCode;
+
+
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
 
 }

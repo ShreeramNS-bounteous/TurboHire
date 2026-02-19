@@ -27,8 +27,15 @@ public class JobRoundController {
         return jobRoundService.createRound(
                 jobId,
                 request.getRoundName(),
+<<<<<<< HEAD
                 request.getRoundOrder()
         );
+=======
+                request.getRoundOrder(),
+                request.getEvaluationTemplateCode() // 🔥 NEW
+        );
+
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
     }
 
     /**

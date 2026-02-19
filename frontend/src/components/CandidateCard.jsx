@@ -3,13 +3,13 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 const CandidateCard = ({
   candidate,
-  previousFeedback = [],
+  feedbackToShow = [],
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
   // Sort feedback (latest first)
-  const sortedFeedback = [...previousFeedback].sort(
+  const sortedFeedback = [...feedbackToShow].sort(
     (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
   );
 
@@ -33,11 +33,12 @@ const CandidateCard = ({
 
     document.addEventListener("mousedown", handleClickOutside);
     console.log(candidate)
+    console.log(latestFeedback)
     return () =>
       document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
- 
+ console.log(candidate);
 
   return (
     <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-visible">
@@ -58,14 +59,14 @@ const CandidateCard = ({
             Location: <b>Bangalore</b>
           </span>
         </div>
-        <span className="cursor-pointer">More Info</span>
+        
       </div>
 
       {/* ================= MAIN CONTENT ================= */}
-      <div className="p-8 flex justify-between items-start">
+      <div className="p-8 flex justify-between items-center">
         
         {/* ===== LEFT SIDE ===== */}
-        <div className="flex gap-6">
+        <div className="flex gap-6 items-center">
           <div className="h-20 w-20 bg-yellow-500 text-white rounded-full flex items-center justify-center text-2xl font-bold">
             {(candidate.candidateName || "").charAt(0)}
           </div>
@@ -81,9 +82,6 @@ const CandidateCard = ({
               {candidate.candidateEmail || ""}
             </p>
 
-            <button className="mt-4 border px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition">
-              + Add Tag
-            </button>
           </div>
         </div>
 
@@ -146,7 +144,7 @@ const CandidateCard = ({
               <div className="space-y-2 text-sm text-gray-700">
               
                 <p>
-                  <b>Rating:</b> {latestFeedback.rating}/10
+                  <b>Rating:</b> {latestFeedback.rating}/5
                 </p>
                 <p>
                   <b>Recommendation:</b> {latestFeedback.recommendation}
