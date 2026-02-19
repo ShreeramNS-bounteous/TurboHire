@@ -3,13 +3,21 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 const CandidateCard = ({
   candidate,
+<<<<<<< HEAD
   previousFeedback = [],
+=======
+  feedbackToShow = [],
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
   // Sort feedback (latest first)
+<<<<<<< HEAD
   const sortedFeedback = [...previousFeedback].sort(
+=======
+  const sortedFeedback = [...feedbackToShow].sort(
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
     (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
   );
 
@@ -33,11 +41,19 @@ const CandidateCard = ({
 
     document.addEventListener("mousedown", handleClickOutside);
     console.log(candidate)
+<<<<<<< HEAD
+=======
+    console.log(latestFeedback)
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
     return () =>
       document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+<<<<<<< HEAD
  
+=======
+ console.log(candidate);
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
 
   return (
     <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-visible">
@@ -58,6 +74,7 @@ const CandidateCard = ({
             Location: <b>Bangalore</b>
           </span>
         </div>
+<<<<<<< HEAD
         <span className="cursor-pointer">More Info</span>
       </div>
 
@@ -66,6 +83,16 @@ const CandidateCard = ({
         
         {/* ===== LEFT SIDE ===== */}
         <div className="flex gap-6">
+=======
+        
+      </div>
+
+      {/* ================= MAIN CONTENT ================= */}
+      <div className="p-8 flex justify-between items-center">
+        
+        {/* ===== LEFT SIDE ===== */}
+        <div className="flex gap-6 items-center">
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
           <div className="h-20 w-20 bg-yellow-500 text-white rounded-full flex items-center justify-center text-2xl font-bold">
             {(candidate.candidateName || "").charAt(0)}
           </div>
@@ -81,9 +108,12 @@ const CandidateCard = ({
               {candidate.candidateEmail || ""}
             </p>
 
+<<<<<<< HEAD
             <button className="mt-4 border px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition">
               + Add Tag
             </button>
+=======
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
           </div>
         </div>
 
@@ -146,7 +176,11 @@ const CandidateCard = ({
               <div className="space-y-2 text-sm text-gray-700">
               
                 <p>
+<<<<<<< HEAD
                   <b>Rating:</b> {latestFeedback.rating}/10
+=======
+                  <b>Rating:</b> {latestFeedback.rating}/5
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
                 </p>
                 <p>
                   <b>Recommendation:</b> {latestFeedback.recommendation}

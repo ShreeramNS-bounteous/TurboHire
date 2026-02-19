@@ -15,6 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+<<<<<<< HEAD
+=======
+import java.util.Optional;
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +48,7 @@ public class InterviewFeedbackService {
         User interviewer = userRepository.findById(actorUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+<<<<<<< HEAD
         InterviewFeedback feedback = InterviewFeedback.builder()
                 .interview(interview)
                 .interviewer(interviewer)
@@ -54,11 +59,44 @@ public class InterviewFeedbackService {
 
         feedbackRepository.save(feedback);
 
+=======
+        // 🔥 CHECK IF FEEDBACK ALREADY EXISTS
+        Optional<InterviewFeedback> existingFeedback =
+                feedbackRepository.findByInterview_IdAndInterviewer_Id(
+                        interviewId,
+                        actorUserId
+                );
+
+        InterviewFeedback feedback;
+
+        if (existingFeedback.isPresent()) {
+            // 🔁 UPDATE MODE
+            feedback = existingFeedback.get();
+        } else {
+            // 🆕 CREATE MODE
+            feedback = new InterviewFeedback();
+            feedback.setInterview(interview);
+            feedback.setInterviewer(interviewer);
+        }
+
+        // COMMON FIELDS (both insert & update)
+        feedback.setRating(request.getRating());
+        feedback.setRecommendation(request.getRecommendation());
+        feedback.setComments(request.getComments());
+
+        feedbackRepository.save(feedback);
+
+        // Only set these once (optional but clean)
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
         interview.setFeedbackSubmitted(true);
         interview.setDecisionStatus(DecisionStatus.PENDING_DECISION);
         interviewRepository.save(interview);
     }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
     /**
      * Get feedback from previous rounds for the same candidate
      */

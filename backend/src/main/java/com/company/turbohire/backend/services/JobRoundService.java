@@ -21,7 +21,14 @@ public class JobRoundService {
     /**
      * HR creates a round for a job
      */
+<<<<<<< HEAD
     public Long createRound(Long jobId, String roundName, Integer roundOrder) {
+=======
+    public Long createRound(Long jobId,
+                            String roundName,
+                            Integer roundOrder,
+                            String evaluationTemplateCode) {
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
 
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
@@ -30,12 +37,24 @@ public class JobRoundService {
                 .job(job)
                 .roundName(roundName)
                 .roundOrder(roundOrder)
+<<<<<<< HEAD
                 .build();
 
         jobRoundRepository.save(round);
         return round.getId();
     }
 
+=======
+                .evaluationTemplateCode(evaluationTemplateCode) // 🔥 NEW
+                .build();
+
+        jobRoundRepository.save(round);
+
+        return round.getId();
+    }
+
+
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
     /**
      * Get all rounds for a job (ordered)
      */

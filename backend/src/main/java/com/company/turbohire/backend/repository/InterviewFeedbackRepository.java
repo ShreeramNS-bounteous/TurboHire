@@ -22,6 +22,12 @@ public interface InterviewFeedbackRepository extends JpaRepository<InterviewFeed
 
     Optional<InterviewFeedback> findByInterview_Id(Long interviewId);
 
+<<<<<<< HEAD
+=======
+    Optional<InterviewFeedback> findByInterview_IdAndInterviewer_Id(Long interviewId, Long interviewerId);
+
+
+>>>>>>> f83d421 (Recovered local changes after accidental .git deletion)
 
 //    @Query("""
 //            SELECT f FROM InterviewFeedback f
